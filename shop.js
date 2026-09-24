@@ -855,6 +855,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeaderAndScrollTop();
   initMegaDropdowns();
   renderProducts();
+
+  if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+    window.SportsStationDB.fetchProducts().then(prods => {
+      if (prods && prods.length > 0) {
+        PRODUCTS.length = 0;
+        prods.forEach(p => PRODUCTS.push(p));
+        renderProducts();
+      }
+    }).catch(e => console.warn('Gagal sync produk dari Supabase di shop:', e));
+  }
 });
 
 // ============================================================================

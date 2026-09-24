@@ -20,11 +20,132 @@ let productStockFilter = '';
 function initAdminDashboard() {
   checkAdminAuth();
   setupSidebarNavigation();
+  updateDatabaseStatusUI();
   refreshAdminData();
   setupProductFilters();
   setupModals();
   setupLiveSync();
+
+  // Jika Supabase terhubung, sinkronkan data cloud secara asinkron
+  if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+    syncFromSupabaseCloud();
+  }
 }
+
+async function syncFromSupabaseCloud() {
+  if (!window.SportsStationDB || !window.SportsStationDB.isConfigured()) return;
+  try {
+    const products = await window.SportsStationDB.fetchProducts();
+    if (products && products.length > 0) {
+      catalogProducts = products;
+      renderProductsTable();
+      renderSalesOverview();
+    }
+    const orders = await window.SportsStationDB.fetchOrders();
+    if (orders && orders.length > 0) {
+      ordersData = orders;
+      renderOrdersTable();
+      renderRecentOrdersOverview();
+      renderFinancialLedger();
+      renderSalesOverview();
+    }
+    updateDatabaseStatusUI();
+  } catch (e) {
+    console.warn('Gagal sync Supabase di admin:', e);
+  }
+}
+
+function updateDatabaseStatusUI() {
+  const isOnline = window.SportsStationDB && window.SportsStationDB.isConfigured();
+  const dot = document.getElementById('dbStatusDot');
+  const btn = document.getElementById('dbStatusBtn');
+  if (dot) {
+    dot.style.background = isOnline ? '#22c55e' : '#94a3b8';
+    dot.title = isOnline ? 'Terhubung ke Supabase Cloud (PostgreSQL)' : 'Mode Standby / LocalStorage Fallback';
+  }
+  if (btn) {
+    btn.style.borderColor = isOnline ? '#bbf7d0' : '#e2e8f0';
+    btn.style.background = isOnline ? '#f0fdf4' : '#fff';
+    btn.style.color = isOnline ? '#166534' : '#334155';
+  }
+}
+
+function openDatabaseModal() {
+  const modal = document.getElementById('databaseModal');
+  if (!modal) return;
+  const isOnline = window.SportsStationDB && window.SportsStationDB.isConfigured();
+  const alertEl = document.getElementById('dbConnectionStatusAlert');
+  const urlInput = document.getElementById('supabaseUrlInput');
+  const keyInput = document.getElementById('supabaseKeyInput');
+
+  if (urlInput) urlInput.value = localStorage.getItem('SUPABASE_URL') || '';
+  if (keyInput) keyInput.value = localStorage.getItem('SUPABASE_ANON_KEY') || '';
+
+  if (alertEl) {
+    if (isOnline) {
+      alertEl.style.background = '#dcfce7';
+      alertEl.style.color = '#15803d';
+      alertEl.style.border = '1px solid #bbf7d0';
+      alertEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span><strong>Status: Terhubung ke Supabase Cloud</strong> - Data katalog & pesanan tersinkronisasi otomatis dengan PostgreSQL.</span>';
+    } else {
+      alertEl.style.background = '#fef3c7';
+      alertEl.style.color = '#b45309';
+      alertEl.style.border = '1px solid #fde68a';
+      alertEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span><strong>Status: Standby / LocalStorage</strong> - Masukkan Project URL & Anon Key untuk menghubungkan Cloud.</span>';
+    }
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeDatabaseModal() {
+  const modal = document.getElementById('databaseModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function saveDatabaseConfig() {
+  const urlInput = document.getElementById('supabaseUrlInput');
+  const keyInput = document.getElementById('supabaseKeyInput');
+  const url = (urlInput ? urlInput.value : '').trim();
+  const key = (keyInput ? keyInput.value : '').trim();
+
+  if (url && !url.startsWith('https://')) {
+    alert('URL Supabase harus diawali dengan https:// (contoh: https://xyz.supabase.co)');
+    return;
+  }
+
+  if (url) {
+    localStorage.setItem('SUPABASE_URL', url);
+    if (window.SUPABASE_CONFIG) window.SUPABASE_CONFIG.url = url;
+  } else {
+    localStorage.removeItem('SUPABASE_URL');
+  }
+
+  if (key) {
+    localStorage.setItem('SUPABASE_ANON_KEY', key);
+    if (window.SUPABASE_CONFIG) window.SUPABASE_CONFIG.anonKey = key;
+  } else {
+    localStorage.removeItem('SUPABASE_ANON_KEY');
+  }
+
+  updateDatabaseStatusUI();
+  closeDatabaseModal();
+
+  if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.showToast('✅ Berhasil terhubung ke Supabase Cloud! Menyinkronkan data...');
+    }
+    await syncFromSupabaseCloud();
+  } else {
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.showToast('ℹ️ Konfigurasi disimpan. Mode LocalStorage aktif.');
+    }
+  }
+}
+
+window.openDatabaseModal = openDatabaseModal;
+window.closeDatabaseModal = closeDatabaseModal;
+window.saveDatabaseConfig = saveDatabaseConfig;
 
 function refreshAdminData() {
   loadOrdersFromStorage();
@@ -497,6 +618,9 @@ function updateOrderStatus(orderId, newStatus) {
   }
 
   saveOrdersToStorage();
+  if (window.SportsStationDB) {
+    window.SportsStationDB.updateOrderStatus(orderId, newStatus);
+  }
   renderSalesOverview();
   renderRecentOrdersOverview();
   renderOrdersTable();
@@ -2259,6 +2383,10 @@ function handleProductFormSubmit(e) {
   }
 
   saveCatalogToStorage();
+  const savedProd = isEditing ? catalogProducts.find(p => p.id === currentEditingProductId) : catalogProducts[0];
+  if (window.SportsStationDB && savedProd) {
+    window.SportsStationDB.upsertProduct(savedProd);
+  }
   renderProductsTable();
   closeProductModal();
 }
@@ -2270,6 +2398,9 @@ function deleteProduct(productId) {
   if (confirm(`Apakah Anda yakin ingin menghapus produk "${prod.name}" dari katalog toko?`)) {
     catalogProducts = catalogProducts.filter(p => p.id !== productId);
     saveCatalogToStorage();
+    if (window.SportsStationDB) {
+      window.SportsStationDB.deleteProduct(productId);
+    }
     renderProductsTable();
     if (window.SportsStationAuth) {
       window.SportsStationAuth.showToast(`Produk "${prod.name}" berhasil dihapus.`);
@@ -2351,6 +2482,9 @@ function saveQuickSizeStock() {
   prod.stock = Object.values(prod.sizeStock).reduce((sum, q) => sum + (Number(q) || 0), 0);
 
   saveCatalogToStorage();
+  if (window.SportsStationDB) {
+    window.SportsStationDB.upsertProduct(prod);
+  }
   renderProductsTable();
   closeQuickSizeModal();
 

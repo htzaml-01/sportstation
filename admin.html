@@ -77,7 +77,12 @@
         </div>
       </div>
 
-      <div class="admin-topbar-right">
+      <div class="admin-topbar-right" style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" class="admin-btn-action" onclick="openDatabaseModal()" id="dbStatusBtn" style="padding: 6px 12px; font-size: 12.5px;" title="Kelola Koneksi Supabase Database">
+          <i class="fa-solid fa-cloud"></i>
+          <span>Database Cloud</span>
+          <span id="dbStatusDot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; margin-left: 4px;"></span>
+        </button>
         <div class="admin-profile-chip">
           <div class="admin-avatar-circle">A</div>
           <div>
@@ -670,7 +675,56 @@
     </div>
   </div>
 
+  <!-- MODAL SUPABASE DATABASE CONFIG -->
+  <div class="admin-modal-backdrop" id="databaseModal" style="display: none;">
+    <div class="admin-modal-content" style="max-width: 540px;">
+      <div class="admin-modal-header">
+        <div>
+          <h3 class="admin-modal-title"><i class="fa-solid fa-cloud" style="color: #2563eb;"></i> Konfigurasi Supabase Cloud</h3>
+          <p class="admin-modal-desc">Hubungkan toko Sports Station ke database PostgreSQL Supabase</p>
+        </div>
+        <button type="button" class="admin-modal-close" onclick="closeDatabaseModal()">&times;</button>
+      </div>
+
+      <div class="admin-modal-body">
+        <div id="dbConnectionStatusAlert" style="padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+          <!-- Status dynamically rendered -->
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Supabase Project URL</label>
+          <input type="text" id="supabaseUrlInput" class="admin-form-input" placeholder="https://xyzproject.supabase.co">
+          <span style="font-size: 11px; color: #64748b;">Dapatkan di Dashboard Supabase > Settings > API > Project URL</span>
+        </div>
+
+        <div class="admin-form-group">
+          <label class="admin-form-label">Supabase Anon Key (Public Key)</label>
+          <textarea id="supabaseKeyInput" class="admin-form-input" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+          <span style="font-size: 11px; color: #64748b;">Dapatkan di Dashboard Supabase > Settings > API > Project API keys (anon public)</span>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #475569; line-height: 1.5;">
+          <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">
+            <i class="fa-solid fa-file-code" style="color: #2563eb;"></i> Langkah Cepat Supabase SQL:
+          </div>
+          1. Buka <strong>SQL Editor</strong> di dashboard Supabase kamu.<br>
+          2. Salin seluruh isi file <code>supabase-schema.sql</code> di proyek ini.<br>
+          3. Klik tombol <strong>Run</strong> untuk membuat tabel & memasukkan 52 produk otentik secara instan!
+        </div>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button type="button" class="admin-btn-action" onclick="closeDatabaseModal()">Batal</button>
+        <button type="button" class="admin-btn-primary" onclick="saveDatabaseConfig()">
+          <i class="fa-solid fa-plug"></i> Simpan &amp; Hubungkan
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Shared Services & Admin Controller -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
   <script src="auth.js"></script>
   <script src="admin.js"></script>
 </body>

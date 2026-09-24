@@ -227,6 +227,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initThumbnails();
   initHeaderAndScrollTop();
   initMegaDropdowns();
+
+  if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+    window.SportsStationDB.fetchProducts().then(() => {
+      initProductData();
+    }).catch(e => console.warn('Gagal sync produk dari Supabase di PDP:', e));
+  }
 });
 
 // ============================================================================

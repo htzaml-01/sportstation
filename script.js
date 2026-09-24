@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileDrawer();
   initInteractiveCartAndChat();
   initMegaDropdowns();
+
+  if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+    window.SportsStationDB.fetchProducts().then(() => {
+      renderHomeProductShelves();
+    }).catch(e => console.warn('Gagal sync produk dari Supabase di beranda:', e));
+  }
 });
 
 /* ==========================================================================

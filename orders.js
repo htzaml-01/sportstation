@@ -30,6 +30,12 @@ function initOrdersPage() {
   renderOrders();
   setupTrackingModal();
 
+  if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+    window.SportsStationDB.fetchOrders().then(() => {
+      renderOrders();
+    }).catch(err => console.warn('Could not sync orders from cloud', err));
+  }
+
   // Real-time synchronization when orders are placed or updated
   window.addEventListener('storage', (e) => {
     if (!e.key || e.key === 'SportsStationOrders') {

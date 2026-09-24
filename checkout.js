@@ -533,6 +533,9 @@ function saveOrUpdateOrder(partialOrder) {
       orders.unshift(partialOrder);
     }
     localStorage.setItem('SportsStationOrders', JSON.stringify(orders));
+    if (window.SportsStationDB) {
+      window.SportsStationDB.createOrder(partialOrder);
+    }
     // Trigger storage event so admin and other tabs update live
     window.dispatchEvent(new Event('storage'));
   } catch (err) {
