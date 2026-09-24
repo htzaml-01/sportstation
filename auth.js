@@ -79,6 +79,10 @@
       isLoggedIn: true
     };
     saveUser(user);
+
+    // Sync ke Supabase Auth & public.profiles
+    syncAuthWithSupabase('login', user.email, cleanPw, user.name, user.role);
+
     return { success: true, user, isAdmin: false };
   }
 
@@ -97,7 +101,104 @@
       isLoggedIn: true
     };
     saveUser(user);
+
+    // Sync ke Supabase Auth & public.profiles
+    syncAuthWithSupabase('register', email, password, name, 'customer');
+
     return { success: true, user };
+  }
+
+  /**
+   * Sinkronisasi data user & profile ke Supabase Cloud
+   */
+  function syncAuthWithSupabase(action, email, password, name, role) {
+    if (!window.SportsStationDB || !window.SportsStationDB.isConfigured()) return;
+    const sb = window.SportsStationDB.getClient();
+    if (!sb) return;
+
+    if (action === 'register') {
+      sb.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: { full_name: name, role: role || 'customer' } }
+      }).then(({ data, error }) => {
+        if (data && data.user) {
+          sb.from('profiles').upsert({
+            id: data.user.id,
+            email: email,
+            full_name: name,
+            role: role || 'customer'
+          }).then(() => console.log('✅ Profil Supabase tersimpan:', email))
+            .catch(err => console.warn('Gagal upsert profile di Supabase:', err));
+        }
+      }).catch(err => console.warn('Supabase signUp error:', err));
+    } else if (action === 'login') {
+      sb.auth.signInWithPassword({ email: email, password: password })
+        .then(({ data, error }) => {
+          if (data && data.user) {
+            sb.from('profiles').select('*').eq('id', data.user.id).single()
+              .then(({ data: prof }) => {
+                if (prof) {
+                  const currentUser = getCurrentUser();
+                  if (currentUser) {
+                    currentUser.name = prof.full_name || currentUser.name;
+                    currentUser.phone = prof.phone || currentUser.phone;
+                    currentUser.address = prof.address || currentUser.address;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
+                    updateAllAuthUI();
+                  }
+                } else {
+                  // Profil belum ada, buatkan
+                  sb.from('profiles').upsert({
+                    id: data.user.id,
+                    email: email,
+                    full_name: name || email.split('@')[0],
+                    role: role || 'customer'
+                  });
+                }
+              });
+          } else if (error) {
+            // Jika akun belum ada di Supabase Auth, otomatis daftarkan
+            sb.auth.signUp({
+              email: email,
+              password: password,
+              options: { data: { full_name: name || email.split('@')[0], role: role || 'customer' } }
+            }).then(({ data: suData }) => {
+              if (suData && suData.user) {
+                sb.from('profiles').upsert({
+                  id: suData.user.id,
+                  email: email,
+                  full_name: name || email.split('@')[0],
+                  role: role || 'customer'
+                });
+              }
+            });
+          }
+        });
+    }
+  }
+
+  function checkAndSyncLoggedInProfile() {
+    const user = getCurrentUser();
+    if (!user || !user.email) return;
+    if (!window.SportsStationDB || !window.SportsStationDB.isConfigured()) return;
+    const sb = window.SportsStationDB.getClient();
+    if (!sb) return;
+
+    sb.from('profiles').select('id, email, full_name').eq('email', user.email).then(({ data, error }) => {
+      if (!error && (!data || data.length === 0)) {
+        sb.auth.getUser().then(({ data: authData }) => {
+          if (authData && authData.user) {
+            sb.from('profiles').upsert({
+              id: authData.user.id,
+              email: user.email,
+              full_name: user.name || 'Sports Station Member',
+              role: user.role || 'customer'
+            });
+          }
+        });
+      }
+    });
   }
 
   /**
@@ -288,9 +389,14 @@
   };
 
   // Run on DOM loaded
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateAllAuthUI);
-  } else {
+  function onReady() {
     updateAllAuthUI();
+    checkAndSyncLoggedInProfile();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', onReady);
+  } else {
+    onReady();
   }
 })();

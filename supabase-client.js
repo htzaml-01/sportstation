@@ -10,8 +10,8 @@
 // 1. KONFIGURASI SUPABASE (Isi URL & Anon Key dari Dashboard Supabase kamu)
 // ============================================================================
 window.SUPABASE_CONFIG = window.SUPABASE_CONFIG || {
-  url: localStorage.getItem('SUPABASE_URL') || 'https://YOUR_PROJECT_ID.supabase.co',
-  anonKey: localStorage.getItem('SUPABASE_ANON_KEY') || 'YOUR_SUPABASE_ANON_KEY'
+  url: localStorage.getItem('SUPABASE_URL') || 'https://herktkegxggpdbfzwsem.supabase.co',
+  anonKey: localStorage.getItem('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhlcmt0a2VneGdncGRiZnp3c2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzQxOTYsImV4cCI6MjEwNTgxMDE5Nn0.WUUUmQVdvIOd06aBcBFIso9h7F2buWmKmXOPskqypYk'
 };
 
 let _supabaseInstance = null;
