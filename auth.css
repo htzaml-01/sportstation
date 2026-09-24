@@ -1,0 +1,596 @@
+/**
+ * SPORTS STATION - AUTH & LOGIN STYLES
+ * High-fidelity styling matching sportsstation.id/login
+ */
+
+/* ==========================================================================
+   TOP UTILITY BAR (matching screenshot)
+   ========================================================================== */
+.site-top-bar {
+  background-color: #111111;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 400;
+  border-bottom: 1px solid #27272a;
+  user-select: none;
+}
+
+.site-top-bar-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 32px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.top-bar-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.top-bar-nav li {
+  display: flex;
+  align-items: center;
+}
+
+.top-bar-nav a {
+  color: #a1a1aa;
+  text-decoration: none;
+  transition: color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.top-bar-nav a:hover {
+  color: #ffffff;
+}
+
+.top-bar-divider {
+  width: 1px;
+  height: 11px;
+  background-color: #3f3f46;
+  margin: 0 2px;
+}
+
+/* ==========================================================================
+   HEADER AUTH SLOT (Beside Cart)
+   ========================================================================== */
+.header-auth-slot {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* When not logged in: "Login" button */
+.header-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  text-decoration: none;
+  background-color: transparent;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-auth-btn i {
+  font-size: 14px;
+  color: #4b5563;
+  transition: color 0.2s ease;
+}
+
+.header-auth-btn:hover {
+  border-color: #f26522;
+  color: #f26522;
+  background-color: #fffaf5;
+}
+
+.header-auth-btn:hover i {
+  color: #f26522;
+}
+
+/* When logged in: "Profile" trigger & menu */
+.header-profile-menu {
+  position: relative;
+}
+
+.header-profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.header-profile-trigger .profile-icon {
+  font-size: 16px;
+  color: #f26522;
+}
+
+.header-profile-trigger .profile-chevron {
+  font-size: 10px;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.header-profile-trigger[aria-expanded="true"] .profile-chevron {
+  transform: rotate(180deg);
+}
+
+.header-profile-trigger:hover {
+  background-color: #ffffff;
+  border-color: #f26522;
+}
+
+/* Profile Dropdown Panel */
+.profile-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 270px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  padding: 16px 14px;
+  z-index: 1050;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.profile-dropdown-panel.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.profile-dropdown-panel::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 24px;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  transform: rotate(45deg);
+  border-left: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.profile-user-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px 10px;
+}
+
+.profile-avatar-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f26522, #ea580c);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.profile-user-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-user-email {
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-menu-divider {
+  height: 1px;
+  background-color: #f3f4f6;
+  margin: 8px 0;
+}
+
+.profile-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: #374151;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 400;
+  transition: all 0.15s ease;
+}
+
+.profile-menu-item i {
+  font-size: 14px;
+  color: #6b7280;
+  width: 16px;
+  text-align: center;
+  transition: color 0.15s ease;
+}
+
+.profile-menu-item:hover {
+  background-color: #f9fafb;
+  color: #f26522;
+}
+
+.profile-menu-item:hover i {
+  color: #f26522;
+}
+
+
+
+.profile-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.profile-logout-btn i {
+  font-size: 13px;
+  width: 16px;
+  text-align: center;
+}
+
+.profile-logout-btn:hover {
+  background-color: #fef2f2;
+}
+
+/* ==========================================================================
+   LOGIN & REGISTER PAGE (MATCHING sportsstation.id/login)
+   ========================================================================== */
+.login-page-body {
+  background-color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-page-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 50px 20px 80px;
+  background-color: #ffffff;
+}
+
+.auth-card-container {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* Header Row: "Sign In" + "I don't have an account" */
+.auth-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 22px;
+}
+
+.auth-heading {
+  font-family: var(--font-heading, 'Montserrat', sans-serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: #111827;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.auth-toggle-link {
+  font-size: 13px;
+  color: #2563eb;
+  text-decoration: underline;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.auth-toggle-link:hover {
+  color: #1d4ed8;
+}
+
+/* Form Group & Inputs */
+
+/* Inputs & Form */
+.auth-form-group {
+  margin-bottom: 16px;
+}
+
+.auth-input-field {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 13.5px;
+  font-weight: 400;
+  color: #111827;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.auth-input-field::placeholder {
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+.auth-input-field:focus {
+  border-color: #f26522;
+  box-shadow: 0 0 0 3px rgba(242, 101, 34, 0.12);
+}
+
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 6px;
+  font-size: 14px;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #374151;
+}
+
+/* Forgot Password */
+.forgot-pass-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+  margin-bottom: 22px;
+}
+
+.forgot-pass-link {
+  font-size: 12.5px;
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 400;
+  transition: color 0.15s ease;
+}
+
+.forgot-pass-link:hover {
+  color: #f26522;
+  text-decoration: underline;
+}
+
+/* Submit Button */
+.auth-primary-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 24px;
+  background-color: #f95a00;
+  color: #ffffff;
+  border: none;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 8px rgba(249, 90, 0, 0.25);
+}
+
+.auth-primary-btn:hover {
+  background-color: #ea580c;
+}
+
+.auth-primary-btn:active {
+  transform: scale(0.99);
+}
+
+/* Disclaimer text */
+.auth-disclaimer-box {
+  margin-top: 26px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #6b7280;
+  font-weight: 300;
+}
+
+.auth-disclaimer-box p {
+  margin: 4px 0;
+}
+
+.auth-disclaimer-box a {
+  color: #4b5563;
+  text-decoration: underline;
+}
+
+.auth-disclaimer-box a:hover {
+  color: #f26522;
+}
+
+
+
+/* Quick Demo Login Suggestion Box */
+.demo-hint-box {
+  margin-top: 24px;
+  background-color: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.demo-hint-text strong {
+  color: #111827;
+  font-weight: 500;
+}
+
+.demo-fill-btn {
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #374151;
+  transition: all 0.15s ease;
+}
+
+.demo-fill-btn:hover {
+  border-color: #f26522;
+  color: #f26522;
+}
+
+/* Alert Notification in Card */
+.auth-alert {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  margin-bottom: 16px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-alert.error {
+  display: flex;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.auth-alert.success {
+  display: flex;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+}
+
+/* Floating Chat Button (Matching Screenshot) */
+.official-chat-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: #000000;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  z-index: 999;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  border: none;
+}
+
+.official-chat-fab:hover {
+  transform: scale(1.06);
+  background-color: #1f2937;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .site-top-bar {
+    display: none;
+  }
+
+  .login-page-main {
+    padding: 30px 16px 60px;
+  }
+
+  .auth-card-container {
+    max-width: 100%;
+  }
+
+  .auth-heading {
+    font-size: 22px;
+  }
+
+  .header-auth-btn .auth-btn-label,
+  .header-profile-trigger .profile-btn-label {
+    display: none;
+  }
+
+  .header-auth-btn,
+  .header-profile-trigger {
+    padding: 7px 10px;
+  }
+}

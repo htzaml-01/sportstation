@@ -1,0 +1,251 @@
+/* ==========================================================================
+   SPORTS STATION - SIZE GUIDE MODAL STYLING (size-guide.css)
+   ========================================================================== */
+
+.size-guide-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.size-guide-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.size-guide-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+
+.size-guide-modal-overlay.active .size-guide-modal {
+  transform: translateY(0) scale(1);
+}
+
+/* Modal Header */
+.size-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.size-guide-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.size-guide-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(242, 101, 34, 0.1);
+  color: #f26522;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.size-guide-title {
+  font-family: var(--font-heading, 'Montserrat', sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+.size-guide-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.size-guide-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #9ca3af;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.size-guide-close-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Modal Body */
+.size-guide-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* Tab Bar */
+.size-guide-tabs {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+
+.size-guide-tab {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-heading, 'Montserrat', sans-serif);
+  font-size: 13px;
+  font-weight: 400;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.size-guide-tab.active {
+  background: #ffffff;
+  color: #f26522;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+}
+
+/* Tip Banner */
+.size-guide-tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #c2410c;
+  margin-bottom: 16px;
+}
+
+.size-guide-tip i {
+  font-size: 14px;
+  color: #f26522;
+}
+
+/* Size Table */
+.size-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.size-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 13px;
+}
+
+.size-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 500;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  font-family: var(--font-heading, 'Montserrat', sans-serif);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.size-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  font-weight: 400;
+}
+
+.size-table tr:last-child td {
+  border-bottom: none;
+}
+
+.size-table tr:hover {
+  background-color: #f8fafc;
+}
+
+.size-table tr.highlighted {
+  background-color: #ffedd5;
+  font-weight: 500;
+}
+
+.size-us-badge {
+  display: inline-block;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.btn-table-action {
+  padding: 6px 12px;
+  background: #f26522;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-table-action:hover {
+  background: #d85012;
+  transform: translateY(-1px);
+}
+
+/* Modal Footer */
+.size-guide-footer {
+  padding: 14px 24px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafafa;
+  font-size: 12px;
+  color: #64748b;
+}

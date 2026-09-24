@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout &amp; Payment | Sports Station</title>
+  <meta name="description" content="Pembayaran dan pengiriman pesanan sepatu dan perlengkapan olahraga resmi Sports Station.">
+
+  <!-- Google Fonts: Montserrat & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Base, Auth, & Checkout Styles -->
+  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="auth.css?v=2">
+  <link rel="stylesheet" href="checkout.css?v=1">
+</head>
+<body class="checkout-page-body">
+
+  <!-- TOP UTILITY BAR (matching official Sports Station) -->
+  <div class="site-top-bar">
+    <div class="site-top-bar-container">
+      <ul class="top-bar-nav">
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Fitur Lacak Pesanan');">Track Order</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Lokasi Toko Sports Station terdekat');">Store Location</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="login.html" class="top-bar-signin">Sign In</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#"><i class="fa-solid fa-globe"></i> EN <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i></a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Pusat Bantuan Pelanggan');">Help</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- MAIN NAVIGATION HEADER -->
+  <header class="main-header" id="mainHeader">
+    <div class="header-container">
+      <!-- Logo Sports Station -->
+      <a href="index.html" class="brand-logo" id="logoLink">
+        <img src="Asset/Logo/logo.png" alt="Sports Station Logo" class="logo-img">
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="nav-menu" id="navMenu">
+        <ul class="nav-list">
+          <li class="nav-item"><a href="shop.html" class="nav-link">BRANDS</a></li>
+          <li class="nav-item"><a href="shop.html" class="nav-link">SPORTS</a></li>
+          <li class="nav-item"><a href="shop.html?gender=men" class="nav-link">MEN</a></li>
+          <li class="nav-item"><a href="shop.html?gender=women" class="nav-link">WOMEN</a></li>
+          <li class="nav-item"><a href="shop.html?gender=kids" class="nav-link">KIDS</a></li>
+          <li class="nav-item"><a href="shop.html" class="nav-link">EQUIPMENT</a></li>
+          <li class="nav-item"><a href="shop.html?sale=true" class="nav-link nav-link-sale">SALE</a></li>
+        </ul>
+      </nav>
+
+      <!-- Right Header Actions (Search, Auth Slot, Cart) -->
+      <div class="header-actions">
+        <!-- Search Bar -->
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search" autocomplete="off">
+        </div>
+
+        <!-- Auth Slot (Login / Profile rendered dynamically) -->
+        <div class="header-auth-slot" id="headerAuthSlot"></div>
+
+        <!-- Cart Icon -->
+        <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Shopping Cart">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="cart-badge" id="cartCount">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CHECKOUT VIEW -->
+  <main class="checkout-main">
+
+    <!-- Breadcrumb -->
+    <div class="checkout-breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <a href="cart.html">Shopping Cart</a>
+      <span>/</span>
+      <span class="current">Checkout &amp; Payment</span>
+    </div>
+
+    <form id="checkoutForm" novalidate>
+      <div class="checkout-layout">
+
+        <!-- LEFT COLUMN: CUSTOMER, MAP, COURIER & PAYMENT -->
+        <div class="checkout-form-column">
+
+          <!-- 1. CUSTOMER CONTACT INFO -->
+          <section class="checkout-card">
+            <div class="checkout-card-header">
+              <h2 class="checkout-card-title">
+                <i class="fa-solid fa-user-check"></i> Data Kontak Pelanggan
+              </h2>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="customerName">Nama Lengkap <span class="req">*</span></label>
+              <input type="text" id="customerName" class="form-input" placeholder="Nama Lengkap Anda" value="Azzam Anindita Daniswara" required>
+            </div>
+
+            <div class="checkout-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="customerEmail">Email <span class="req">*</span></label>
+                <input type="email" id="customerEmail" class="form-input" placeholder="contoh@email.com" value="aznidaniswata@gmail.com" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="customerPhone">Nomor Telepon / WhatsApp <span class="req">*</span></label>
+                <input type="tel" id="customerPhone" class="form-input" placeholder="081234567890" value="081234567890" required>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. MAP & DELIVERY ADDRESS -->
+          <section class="checkout-card">
+            <div class="checkout-card-header">
+              <h2 class="checkout-card-title">
+                <i class="fa-solid fa-map-location-dot"></i> Pilih Lokasi Tujuan di Peta (Pengiriman dari Gudang Pusat Sports Station)
+              </h2>
+            </div>
+
+            <!-- Map Location Search -->
+            <div class="map-search-row">
+              <input type="text" id="mapSearchInput" class="map-search-input" placeholder="Cari kota, kecamatan, atau nama jalan...">
+              <button type="button" id="mapSearchBtn" class="map-search-btn">
+                <i class="fa-solid fa-magnifying-glass"></i> Cari
+              </button>
+            </div>
+
+            <!-- Leaflet Interactive Map -->
+            <div class="checkout-map-container" id="checkoutMap"></div>
+
+            <div class="map-hint-banner">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>Geser pin merah di peta atau klik pada peta untuk menentukan titik presisi kurir pengantaran.</span>
+            </div>
+
+            <!-- Street Address -->
+            <div class="form-group">
+              <label class="form-label" for="streetAddress">Alamat Lengkap (Jalan, RT/RW, Kelurahan, Kecamatan) <span class="req">*</span></label>
+              <textarea id="streetAddress" class="form-textarea" placeholder="Tuliskan nama jalan dan alamat lengkap..." required>Plumbungan, Sukodono, Sidoarjo, Jawa Timur, 61257, Indonesia</textarea>
+            </div>
+
+            <div class="checkout-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="postalCode">Kode Pos <span class="req">*</span></label>
+                <input type="text" id="postalCode" class="form-input" placeholder="61257" value="61257" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="addressDetail">Detail Alamat (Gedung, Lantai, Patokan)</label>
+                <input type="text" id="addressDetail" class="form-input" placeholder="Contoh: Rumah pagar hitam samping masjid">
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. SHIPPING COURIER SELECTION -->
+          <section class="checkout-card">
+            <div class="checkout-card-header">
+              <h2 class="checkout-card-title">
+                <i class="fa-solid fa-truck-fast"></i> Opsi Ekspedisi Pengiriman
+              </h2>
+            </div>
+
+            <div class="courier-options-list" id="courierOptionsList">
+              <!-- JNE Reguler -->
+              <div class="courier-option-card selected" data-name="JNE Reguler (2-3 Hari)" data-price="18000">
+                <div class="courier-card-left">
+                  <div class="courier-radio"></div>
+                  <div class="courier-info">
+                    <span class="courier-name">JNE Reguler</span>
+                    <span class="courier-estimate">Estimasi 2 - 3 Hari Kerja</span>
+                  </div>
+                </div>
+                <span class="courier-price">Rp 18.000</span>
+              </div>
+
+              <!-- SiCepat BEST -->
+              <div class="courier-option-card" data-name="SiCepat BEST (1-2 Hari)" data-price="22000">
+                <div class="courier-card-left">
+                  <div class="courier-radio"></div>
+                  <div class="courier-info">
+                    <span class="courier-name">SiCepat BEST</span>
+                    <span class="courier-estimate">Estimasi 1 - 2 Hari Kerja</span>
+                  </div>
+                </div>
+                <span class="courier-price">Rp 22.000</span>
+              </div>
+
+              <!-- J&T Express -->
+              <div class="courier-option-card" data-name="J&T Express (2-3 Hari)" data-price="19000">
+                <div class="courier-card-left">
+                  <div class="courier-radio"></div>
+                  <div class="courier-info">
+                    <span class="courier-name">J&amp;T Express</span>
+                    <span class="courier-estimate">Estimasi 2 - 3 Hari Kerja</span>
+                  </div>
+                </div>
+                <span class="courier-price">Rp 19.000</span>
+              </div>
+
+              <!-- Instant GoSend/Grab -->
+              <div class="courier-option-card" data-name="Instant Courier (Hari Ini)" data-price="35000">
+                <div class="courier-card-left">
+                  <div class="courier-radio"></div>
+                  <div class="courier-info">
+                    <span class="courier-name">GoSend / Grab Instant</span>
+                    <span class="courier-estimate">Tiba Hari Ini (Maks. 3 Jam)</span>
+                  </div>
+                </div>
+                <span class="courier-price">Rp 35.000</span>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- RIGHT COLUMN: ORDER SUMMARY -->
+        <aside class="checkout-summary-column">
+          <div class="checkout-summary-card">
+            <h2 class="checkout-summary-title">ORDER SUMMARY</h2>
+
+            <!-- Purchased items list -->
+            <div class="summary-items-box" id="summaryItemsList">
+              <!-- Populated dynamically by checkout.js -->
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="checkout-calc-rows">
+              <div class="checkout-calc-row">
+                <span>Subtotal:</span>
+                <span id="summarySubtotal" class="highlight">Rp 0</span>
+              </div>
+
+              <div class="checkout-calc-row">
+                <span>Shipping (Ongkir):</span>
+                <span id="summaryShipping" class="highlight">Rp 18.000</span>
+              </div>
+
+              <div class="checkout-calc-row discount" id="summaryDiscountRow" style="display: none;">
+                <span>Diskon:</span>
+                <span id="summaryDiscount">-Rp 0</span>
+              </div>
+            </div>
+
+            <div class="checkout-calc-divider"></div>
+
+            <div class="checkout-total-row">
+              <span>Total:</span>
+              <span id="summaryTotal" class="total-amount">Rp 0</span>
+            </div>
+
+            <!-- CTA Button -->
+            <button type="submit" id="placeOrderBtn" class="checkout-submit-btn">
+              <i class="fa-solid fa-lock"></i> PLACE ORDER NOW
+            </button>
+
+          </div>
+        </aside>
+
+      </div>
+    </form>
+  </main>
+
+  <!-- SUCCESS PAYMENT MODAL -->
+  <div class="order-success-overlay" id="orderSuccessModal">
+    <div class="order-success-modal">
+      <div class="success-icon-circle">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="success-modal-title">Pesanan Berhasil Dibuat!</h3>
+      <p class="success-modal-subtitle">Terima kasih atas pesanan Anda di Sports Station. Silakan selesaikan pembayaran.</p>
+
+      <div class="order-summary-pill">
+        <div class="order-pill-row">
+          <span>Nomor Pesanan:</span>
+          <strong id="modalOrderId">SS-ORD-928174</strong>
+        </div>
+        <div class="order-pill-row">
+          <span>Metode Pembayaran:</span>
+          <strong id="modalPaymentMethod">BCA Virtual Account</strong>
+        </div>
+        <div class="order-pill-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+          <span>Nomor Virtual Account:</span>
+          <strong id="modalVaNumber" style="font-size: 14px; color: #f95a00;">8808123456789012</strong>
+        </div>
+        <div style="text-align: right; margin-top: 4px;">
+          <button type="button" onclick="copyVirtualAccount()" style="background: none; border: none; color: #2563eb; font-size: 11px; cursor: pointer; text-decoration: underline;">
+            <i class="fa-regular fa-copy"></i> Salin Nomor
+          </button>
+        </div>
+        <div class="order-pill-row" style="margin-top: 8px;">
+          <span>Ekspedisi Pengiriman:</span>
+          <strong id="modalCourier">JNE Reguler</strong>
+        </div>
+        <div class="order-pill-row" style="margin-top: 6px; font-size: 13.5px;">
+          <span>Total Pembayaran:</span>
+          <strong id="modalTotal" style="color: #0f172a;">Rp 0</strong>
+        </div>
+      </div>
+
+      <div class="modal-action-btns">
+        <a href="orders.html" class="modal-btn-primary">Lihat Pesanan Saya</a>
+        <a href="shop.html" class="modal-btn-secondary">Lanjut Belanja</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING CHAT BUTTON -->
+  <button class="official-chat-fab" id="officialChatFab" title="Bantuan Chat Sports Station" aria-label="Live Chat" onclick="window.SportsStationAuth && window.SportsStationAuth.showToast('Layanan Bantuan Pelanggan Sports Station siap membantu Anda!');">
+    <i class="fa-solid fa-comment-dots"></i>
+  </button>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Midtrans Snap JS (Sandbox) -->
+  <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="Mid-client-qB8d_E2_rTlIeywU"></script>
+
+  <!-- Shared Services & Checkout Script -->
+  <script src="cart-service.js"></script>
+  <script src="auth.js"></script>
+  <script src="checkout.js"></script>
+
+</body>
+</html>

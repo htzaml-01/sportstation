@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesanan Saya | Sports Station</title>
+  <meta name="description" content="Riwayat dan status pesanan produk olahraga Anda di Sports Station resmi.">
+
+  <!-- Google Fonts: Montserrat & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Base & Component Styles -->
+  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="auth.css?v=3">
+  <link rel="stylesheet" href="orders.css?v=1">
+</head>
+<body class="orders-page-body">
+
+  <!-- TOP UTILITY BAR -->
+  <div class="site-top-bar">
+    <div class="site-top-bar-container">
+      <ul class="top-bar-nav">
+        <li><a href="orders.html"><i class="fa-solid fa-truck-ramp-box" style="margin-right: 4px;"></i> Track Order</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Lokasi Toko Sports Station terdekat');">Store Location</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="login.html" class="top-bar-signin">Sign In</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#"><i class="fa-solid fa-globe"></i> EN <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i></a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Pusat Bantuan Pelanggan Sports Station');">Help</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- MAIN NAVIGATION HEADER -->
+  <header class="main-header" id="mainHeader">
+    <div class="header-container">
+      <!-- Logo Sports Station -->
+      <a href="index.html" class="brand-logo" id="logoLink">
+        <img src="Asset/Logo/logo.png" alt="Sports Station Logo" class="logo-img">
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="nav-menu" id="navMenu">
+        <ul class="nav-list">
+          <li class="nav-item"><a href="shop.html" class="nav-link">BRANDS</a></li>
+          <li class="nav-item"><a href="shop.html" class="nav-link">SPORTS</a></li>
+          <li class="nav-item"><a href="shop.html?gender=men" class="nav-link">MEN</a></li>
+          <li class="nav-item"><a href="shop.html?gender=women" class="nav-link">WOMEN</a></li>
+          <li class="nav-item"><a href="shop.html?gender=kids" class="nav-link">KIDS</a></li>
+          <li class="nav-item"><a href="shop.html" class="nav-link">EQUIPMENT</a></li>
+          <li class="nav-item"><a href="shop.html?sale=true" class="nav-link nav-link-sale">SALE</a></li>
+        </ul>
+      </nav>
+
+      <!-- Right Header Actions (Search, Auth Slot, Cart) -->
+      <div class="header-actions">
+        <!-- Search Bar -->
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search" autocomplete="off">
+        </div>
+
+        <!-- Auth Slot (Login / Profile rendered dynamically) -->
+        <div class="header-auth-slot" id="headerAuthSlot"></div>
+
+        <!-- Cart Icon -->
+        <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Shopping Cart">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="cart-badge" id="cartCount">0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN PESANAN SAYA VIEW -->
+  <main class="orders-main">
+    <!-- Breadcrumb -->
+    <nav class="orders-breadcrumb" aria-label="Breadcrumb">
+      <a href="index.html">Beranda</a>
+      <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+      <a href="index.html">Akun</a>
+      <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
+      <span>Pesanan Saya</span>
+    </nav>
+
+    <!-- Page Header & Search -->
+    <div class="orders-page-header">
+      <div class="orders-title-box">
+        <h1>Pesanan Saya</h1>
+        <p>Pantau status transaksi, rincian pembayaran, dan pelacakan pengiriman paket Anda.</p>
+      </div>
+
+      <div class="orders-search-box">
+        <i class="fa-solid fa-magnifying-glass orders-search-icon"></i>
+        <input type="text" id="ordersSearchInput" class="orders-search-input" placeholder="Cari No. Pesanan atau Nama Produk...">
+      </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="orders-tabs-wrapper">
+      <ul class="orders-tabs-nav" role="tablist">
+        <li>
+          <button class="orders-tab-btn active" data-tab="semua">
+            Semua <span class="orders-tab-badge" id="count-semua">0</span>
+          </button>
+        </li>
+        <li>
+          <button class="orders-tab-btn" data-tab="menunggu-pembayaran">
+            Menunggu Pembayaran <span class="orders-tab-badge" id="count-menunggu-pembayaran">0</span>
+          </button>
+        </li>
+        <li>
+          <button class="orders-tab-btn" data-tab="diproses">
+            Diproses <span class="orders-tab-badge" id="count-diproses">0</span>
+          </button>
+        </li>
+        <li>
+          <button class="orders-tab-btn" data-tab="dikirim">
+            Dikirim <span class="orders-tab-badge" id="count-dikirim">0</span>
+          </button>
+        </li>
+        <li>
+          <button class="orders-tab-btn" data-tab="selesai">
+            Selesai <span class="orders-tab-badge" id="count-selesai">0</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Orders Cards List -->
+    <div class="orders-list-container" id="ordersListContainer">
+      <!-- Populated dynamically by orders.js -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="orders-empty-state" id="ordersEmptyState" style="display: none;">
+      <div class="orders-empty-icon">
+        <i class="fa-solid fa-bag-shopping"></i>
+      </div>
+      <h2 class="orders-empty-title">Belum Ada Pesanan</h2>
+      <p class="orders-empty-desc">Anda belum memiliki riwayat pesanan pada kategori ini. Jelajahi katalog koleksi sepatu dan apparel terbaru kami.</p>
+      <a href="shop.html" class="order-btn-primary" style="padding: 10px 24px; font-size: 13.5px;">Mulai Belanja</a>
+    </div>
+  </main>
+
+  <!-- TRACKING MODAL -->
+  <div class="tracking-modal-backdrop" id="trackingModal">
+    <div class="tracking-modal-card">
+      <div class="tracking-modal-header">
+        <h3 class="tracking-modal-title">
+          <i class="fa-solid fa-route" style="color: #f95a00;"></i>
+          Lacak Pengiriman Paket
+        </h3>
+        <button class="tracking-close-btn" id="trackingModalClose" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="tracking-modal-body">
+        <div class="tracking-summary-box">
+          <div>
+            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">No. Pesanan:</div>
+            <strong id="trackOrderId">SS-ORD-749201</strong>
+          </div>
+          <div>
+            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">Kurir Ekspedisi:</div>
+            <strong id="trackCourier">JNE Reguler</strong>
+          </div>
+          <div style="grid-column: span 2; padding-top: 6px; border-top: 1px dashed #e2e8f0;">
+            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">Nomor Resi:</div>
+            <strong id="trackResi" style="font-family: monospace; color: #f95a00; font-size: 14px;">BITE-JNE-98217301</strong>
+          </div>
+          <div style="grid-column: span 2;">
+            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">Alamat Tujuan:</div>
+            <span id="trackDest" style="font-size: 12px; color: #334155;">Plumbungan, Sukodono, Sidoarjo</span>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="tracking-timeline" id="trackingTimelineContainer">
+          <!-- Dynamically populated based on live order status -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Services & Controller Script -->
+  <script src="cart-service.js"></script>
+  <script src="auth.js"></script>
+  <script src="orders.js"></script>
+</body>
+</html>

@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sports Station | Toko Perlengkapan & Sepatu Olahraga Resmi</title>
+  <meta name="description" content="Sports Station - Destinasi resmi belanja sepatu, pakaian, dan perlengkapan olahraga terbaik dari merek ternama dunia: Nike, Skechers, Converse, Reebok, Diadora, Adidas, New Balance, dan banyak lagi.">
+  
+  <!-- Google Fonts: Montserrat & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,700;1,800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons for clean UI elements -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="size-guide.css">
+  <link rel="stylesheet" href="auth.css?v=2">
+</head>
+<body>
+
+  <!-- TOP UTILITY BAR (matching official Sports Station) -->
+  <div class="site-top-bar">
+    <div class="site-top-bar-container">
+      <ul class="top-bar-nav">
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Fitur Lacak Pesanan');">Track Order</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Lokasi Toko Sports Station terdekat');">Store Location</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="login.html" class="top-bar-signin">Sign In</a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#"><i class="fa-solid fa-globe"></i> EN <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i></a></li>
+        <li class="top-bar-divider"></li>
+        <li><a href="#" onclick="event.preventDefault(); window.SportsStationAuth && window.SportsStationAuth.showToast('Pusat Bantuan Pelanggan');">Help</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header -->
+  <header class="main-header" id="mainHeader">
+    <div class="header-container">
+      
+      <!-- Logo Sports Station -->
+      <a href="index.html" class="brand-logo" id="logoLink">
+        <img src="Asset/Logo/logo.png" alt="Sports Station Logo" class="logo-img">
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="nav-menu" id="navMenu">
+        <ul class="nav-list">
+          <li class="nav-item has-dropdown">
+            <a href="shop.html" class="nav-link">BRANDS</a>
+            <!-- Brands Mega Menu Dropdown (Hanya dari Asset) -->
+            <div class="mega-dropdown brands-dropdown" id="brandsDropdown">
+              <div class="brands-dropdown-inner">
+                
+                <!-- Col 1: A-B -->
+                <div class="brand-col">
+                  <h4 class="mega-col-title">A-B</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?brand=adidas">Adidas</a></li>
+                    <li><a href="shop.html?brand=airwalk">Airwalk</a></li>
+                    <li><a href="shop.html?brand=astec">Astec</a></li>
+                  </ul>
+                </div>
+
+                <!-- Col 2: C-E -->
+                <div class="brand-col">
+                  <h4 class="mega-col-title">C-E</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?brand=converse">Converse</a></li>
+                    <li><a href="shop.html?brand=diadora">Diadora</a></li>
+                  </ul>
+                </div>
+
+                <!-- Col 3: F-K -->
+                <div class="brand-col">
+                  <h4 class="mega-col-title">F-K</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?brand=hoka">Hoka</a></li>
+                    <li><a href="shop.html?brand=jordan">Jordan</a></li>
+                  </ul>
+                </div>
+
+                <!-- Col 4: L-P -->
+                <div class="brand-col">
+                  <h4 class="mega-col-title">L-P</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?brand=nb">New Balance</a></li>
+                    <li><a href="shop.html?brand=nike">Nike</a></li>
+                    <li><a href="shop.html?brand=prince">Prince</a></li>
+                    <li><a href="shop.html?brand=puma">Puma</a></li>
+                  </ul>
+                </div>
+
+                <!-- Col 5: R-U -->
+                <div class="brand-col">
+                  <h4 class="mega-col-title">R-U</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?brand=reebok">Reebok</a></li>
+                    <li><a href="shop.html?brand=skechers">Skechers</a></li>
+                    <li><a href="shop.html?brand=spalding">Spalding</a></li>
+                    <li><a href="shop.html?brand=speedo">Speedo</a></li>
+                  </ul>
+                </div>
+
+              </div>
+            </div>
+          </li>
+          <li class="nav-item has-dropdown">
+            <a href="shop.html" class="nav-link">SPORTS</a>
+            <!-- Sports Mega Menu Dropdown -->
+            <div class="mega-dropdown sports-dropdown" id="sportsDropdown">
+              <div class="sports-dropdown-inner">
+                <div class="sport-col">
+                  <h4 class="mega-col-title">SPORTS</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?sport=running">Running</a></li>
+                    <li><a href="shop.html?sport=walking">Walking</a></li>
+                    <li><a href="shop.html?sport=fitness">Fitness</a></li>
+                    <li><a href="shop.html?sport=swimming">Swimming</a></li>
+                    <li><a href="shop.html?sport=basketball">Basketball</a></li>
+                    <li><a href="shop.html?sport=tennis">Tennis</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="nav-item has-dropdown">
+            <a href="shop.html?gender=men" class="nav-link">MEN</a>
+            <!-- Men Mega Menu Dropdown -->
+            <div class="mega-dropdown gender-dropdown" id="menDropdown">
+              <div class="gender-dropdown-inner">
+                
+                <!-- FOOTWEAR -->
+                <div class="gender-col footwear-col">
+                  <h4 class="mega-col-title">FOOTWEAR</h4>
+                  <div class="footwear-subcols">
+                    <ul class="mega-col-list">
+                      <li><a href="shop.html?gender=men&sport=running">Running</a></li>
+                      <li><a href="shop.html?gender=men&sport=walking">Walking</a></li>
+                      <li><a href="shop.html?gender=men&sport=fitness">Fitness</a></li>
+                      <li><a href="shop.html?gender=men&sport=basketball">Basketball</a></li>
+                      <li><a href="shop.html?gender=men&sport=badminton">Badminton</a></li>
+                      <li><a href="shop.html?gender=men&sport=tennis">Tennis</a></li>
+                      <li><a href="shop.html?gender=men&sport=golf">Golf</a></li>
+                      <li><a href="shop.html?gender=men&sport=sneakers">Sneakers</a></li>
+                    </ul>
+                    <ul class="mega-col-list">
+                      <li><a href="shop.html?gender=men&sport=leisure">Leisure</a></li>
+                      <li><a href="shop.html?gender=men&sport=sandals">Sandals</a></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- CLOTHING -->
+                <div class="gender-col clothing-col">
+                  <h4 class="mega-col-title">CLOTHING</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?gender=men">T-Shirts & Polos</a></li>
+                    <li><a href="shop.html?gender=men">Hoodies & Jackets</a></li>
+                    <li><a href="shop.html?gender=men">Pants & Shorts</a></li>
+                    <li><a href="shop.html?gender=men&sport=swimming">Swimwear</a></li>
+                  </ul>
+                </div>
+
+                <!-- ACCESSORIES -->
+                <div class="gender-col accessories-col">
+                  <h4 class="mega-col-title">ACCESSORIES</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?gender=men">Bags</a></li>
+                    <li><a href="shop.html?gender=men">Caps</a></li>
+                    <li><a href="shop.html?gender=men">Socks</a></li>
+                    <li><a href="shop.html?gender=men">Insoles</a></li>
+                    <li><a href="shop.html?gender=men">Others</a></li>
+                  </ul>
+                </div>
+
+              </div>
+            </div>
+          </li>
+          <li class="nav-item has-dropdown">
+            <a href="shop.html?gender=women" class="nav-link">WOMEN</a>
+            <!-- Women Mega Menu Dropdown -->
+            <div class="mega-dropdown gender-dropdown" id="womenDropdown">
+              <div class="gender-dropdown-inner">
+                
+                <!-- FOOTWEAR -->
+                <div class="gender-col footwear-col">
+                  <h4 class="mega-col-title">FOOTWEAR</h4>
+                  <div class="footwear-subcols">
+                    <ul class="mega-col-list">
+                      <li><a href="shop.html?gender=women&sport=running">Running</a></li>
+                      <li><a href="shop.html?gender=women&sport=walking">Walking</a></li>
+                      <li><a href="shop.html?gender=women&sport=fitness">Fitness</a></li>
+                      <li><a href="shop.html?gender=women&sport=basketball">Basketball</a></li>
+                      <li><a href="shop.html?gender=women&sport=badminton">Badminton</a></li>
+                      <li><a href="shop.html?gender=women&sport=tennis">Tennis</a></li>
+                      <li><a href="shop.html?gender=women&sport=golf">Golf</a></li>
+                      <li><a href="shop.html?gender=women&sport=sneakers">Sneakers</a></li>
+                    </ul>
+                    <ul class="mega-col-list">
+                      <li><a href="shop.html?gender=women&sport=leisure">Leisure</a></li>
+                      <li><a href="shop.html?gender=women&sport=sandals">Sandals</a></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- CLOTHING -->
+                <div class="gender-col clothing-col">
+                  <h4 class="mega-col-title">CLOTHING</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?gender=women">T-Shirts & Polos</a></li>
+                    <li><a href="shop.html?gender=women">Hoodies & Jackets</a></li>
+                    <li><a href="shop.html?gender=women">Pants & Shorts</a></li>
+                    <li><a href="shop.html?gender=women&sport=swimming">Swimwear</a></li>
+                  </ul>
+                </div>
+
+                <!-- ACCESSORIES -->
+                <div class="gender-col accessories-col">
+                  <h4 class="mega-col-title">ACCESSORIES</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?gender=women">Bags</a></li>
+                    <li><a href="shop.html?gender=women">Caps</a></li>
+                    <li><a href="shop.html?gender=women">Socks</a></li>
+                    <li><a href="shop.html?gender=women">Insoles</a></li>
+                    <li><a href="shop.html?gender=women">Others</a></li>
+                  </ul>
+                </div>
+
+              </div>
+            </div>
+          </li>
+          <li class="nav-item has-dropdown">
+            <a href="shop.html?gender=kids" class="nav-link">KIDS</a>
+            <!-- Kids Mega Menu Dropdown -->
+            <div class="mega-dropdown gender-dropdown" id="kidsDropdown">
+              <div class="gender-dropdown-inner">
+                
+                <!-- FOOTWEAR -->
+                <div class="gender-col footwear-col">
+                  <h4 class="mega-col-title">FOOTWEAR</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?gender=kids&sport=running">Running</a></li>
+                    <li><a href="shop.html?gender=kids&sport=sneakers">Sneakers</a></li>
+                    <li><a href="shop.html?gender=kids&sport=leisure">Leisure</a></li>
+                  </ul>
+                </div>
+
+                <!-- CLOTHING -->
+                <div class="gender-col clothing-col">
+                  <h4 class="mega-col-title">CLOTHING</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?gender=kids">T-Shirts & Polos</a></li>
+                    <li><a href="shop.html?gender=kids">Hoodies & Jackets</a></li>
+                    <li><a href="shop.html?gender=kids">Pants & Shorts</a></li>
+                    <li><a href="shop.html?gender=kids&sport=swimming">Swimwear</a></li>
+                  </ul>
+                </div>
+
+                <!-- ACCESSORIES -->
+                <div class="gender-col accessories-col">
+                  <h4 class="mega-col-title">ACCESSORIES</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?gender=kids">Bags</a></li>
+                    <li><a href="shop.html?gender=kids">Caps</a></li>
+                    <li><a href="shop.html?gender=kids">Socks</a></li>
+                    <li><a href="shop.html?gender=kids">Others</a></li>
+                  </ul>
+                </div>
+
+              </div>
+            </div>
+          </li>
+          <li class="nav-item has-dropdown">
+            <a href="shop.html" class="nav-link">EQUIPMENT</a>
+            <!-- Equipment Mega Menu Dropdown -->
+            <div class="mega-dropdown equipment-dropdown" id="equipmentDropdown">
+              <div class="sports-dropdown-inner">
+                <div class="sport-col">
+                  <h4 class="mega-col-title">EQUIPMENT</h4>
+                  <ul class="mega-col-list">
+                    <li><a href="shop.html?sport=swimming">Swimming</a></li>
+                    <li><a href="shop.html?sport=fitness">Fitness</a></li>
+                    <li><a href="shop.html?sport=badminton">Badminton</a></li>
+                    <li><a href="shop.html?sport=football">Football</a></li>
+                    <li><a href="shop.html?sport=basketball">Basketball</a></li>
+                    <li><a href="shop.html?sport=tennis">Tennis</a></li>
+                    <li><a href="shop.html?sport=golf">Golf</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="nav-item"><a href="shop.html?sale=true" class="nav-link nav-link-sale">SALE</a></li>
+        </ul>
+      </nav>
+
+      <!-- Right Header Actions (Search & Cart) -->
+      <div class="header-actions">
+        <!-- Search Bar -->
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search" autocomplete="off">
+        </div>
+
+        <!-- Auth Slot (Login / Profile) -->
+        <div class="header-auth-slot" id="headerAuthSlot"></div>
+
+        <!-- Cart Icon -->
+        <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Shopping Cart">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="cart-badge" id="cartCount">0</span>
+        </a>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Open Navigation Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-header">
+      <img src="Asset/Logo/logo.png" alt="Sports Station" class="drawer-logo">
+      <button class="drawer-close" id="drawerClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <ul class="drawer-links">
+      <li><a href="#brands">BRANDS</a></li>
+      <li><a href="#sports">SPORTS</a></li>
+      <li><a href="#men">MEN</a></li>
+      <li><a href="#women">WOMEN</a></li>
+      <li><a href="#kids">KIDS</a></li>
+      <li><a href="#equipment">EQUIPMENT</a></li>
+      <li><a href="#sale" class="drawer-sale">SALE</a></li>
+    </ul>
+  </div>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <main>
+    <!-- SECTION 1: HERO PROMO BANNER CAROUSEL (URUTAN NO. 1) -->
+    <section class="hero-section" id="heroSection">
+      <div class="hero-carousel-container">
+        
+        <!-- Slides Track -->
+        <div class="hero-track" id="heroTrack">
+          <!-- Slide 1: Skechers Promo -->
+          <div class="hero-slide active">
+            <a href="#promo-skechers" class="hero-slide-link">
+              <img src="Asset/Hero/Hero Fix/Hero fix.png" alt="Skechers Special Price - Starts from Rp 1.000.000" class="hero-banner-img">
+            </a>
+          </div>
+
+          <!-- Slide 2: Marvel Spider-Man Astec Promo -->
+          <div class="hero-slide">
+            <a href="#promo-astec" class="hero-slide-link">
+              <img src="Asset/Hero/Hero Fix/de0bb9d5-165b-46ff-b0ad-e09c155a5a3b.png" alt="Marvel Spider-Man x Astec - Beli Sekarang" class="hero-banner-img">
+            </a>
+          </div>
+
+          <!-- Slide 3: Reebok Special Price Promo -->
+          <div class="hero-slide">
+            <a href="#promo-reebok" class="hero-slide-link">
+              <img src="Asset/Hero/Hero Fix/2cf8e520-bf3c-47f2-bf4a-a71fc229331e.png" alt="Reebok Special Price Footwear - Starts from Rp 500.000" class="hero-banner-img">
+            </a>
+          </div>
+
+          <!-- Slide 4: Special Price Footwear Promo -->
+          <div class="hero-slide">
+            <a href="#promo-footwear" class="hero-slide-link">
+              <img src="Asset/Hero/Hero Fix/163a90b3-6453-46b1-a164-e993c3c517f6.png" alt="Special Price Footwear - Starts from Rp 100.000" class="hero-banner-img">
+            </a>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <button class="hero-nav-btn hero-prev" id="heroPrev" aria-label="Previous Slide">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button class="hero-nav-btn hero-next" id="heroNext" aria-label="Next Slide">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <!-- Pagination Dots -->
+        <div class="hero-dots" id="heroDots">
+          <span class="hero-dot active" data-index="0"></span>
+          <span class="hero-dot" data-index="1"></span>
+          <span class="hero-dot" data-index="2"></span>
+          <span class="hero-dot" data-index="3"></span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 2: BRAND LOGO SLIDER (URUTAN NO. 1 BAWAH) -->
+    <section class="brand-slider-section" id="brands">
+      <div class="brand-slider-wrapper">
+        <button class="brand-nav-btn brand-prev" id="brandPrev" aria-label="Previous Brands">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <div class="brand-track" id="brandTrack">
+          <!-- Skechers -->
+          <div class="brand-item">
+            <a href="shop.html?brand=skechers" title="Skechers">
+              <img src="Asset/Logo Sepatu/skeceers.png" alt="Skechers" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Diadora -->
+          <div class="brand-item">
+            <a href="shop.html?brand=diadora" title="Diadora">
+              <img src="Asset/Logo Sepatu/Diadora_logo_round.png" alt="Diadora" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- New Balance -->
+          <div class="brand-item">
+            <a href="shop.html?brand=nb" title="New Balance">
+              <img src="Asset/Logo Sepatu/nb.png" alt="New Balance" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Airwalk -->
+          <div class="brand-item">
+            <a href="shop.html?brand=airwalk" title="Airwalk">
+              <img src="Asset/Logo Sepatu/airwalk.webp" alt="Airwalk" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Converse -->
+          <div class="brand-item">
+            <a href="shop.html?brand=converse" title="Converse">
+              <img src="Asset/Logo Sepatu/Converse.png" alt="Converse" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Reebok -->
+          <div class="brand-item">
+            <a href="shop.html?brand=reebok" title="Reebok">
+              <img src="Asset/Logo Sepatu/Reebok.png" alt="Reebok" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Adidas -->
+          <div class="brand-item">
+            <a href="shop.html?brand=adidas" title="Adidas">
+              <img src="Asset/Logo Sepatu/adidas.png" alt="Adidas" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Nike -->
+          <div class="brand-item">
+            <a href="shop.html?brand=nike" title="Nike">
+              <img src="Asset/Logo Sepatu/nike.png" alt="Nike" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Puma -->
+          <div class="brand-item">
+            <a href="shop.html?brand=puma" title="Puma">
+              <img src="Asset/Logo Sepatu/puma.png" alt="Puma" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Jordan -->
+          <div class="brand-item">
+            <a href="shop.html?brand=jordan" title="Jordan">
+              <img src="Asset/Logo Sepatu/Jordan.png" alt="Jordan" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Hoka -->
+          <div class="brand-item">
+            <a href="shop.html?brand=hoka" title="Hoka">
+              <img src="Asset/Logo Sepatu/hoka.png" alt="Hoka" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Astec -->
+          <div class="brand-item">
+            <a href="shop.html?brand=astec" title="Astec">
+              <img src="Asset/Logo Sepatu/astec.jpeg" alt="Astec" class="brand-logo-img">
+            </a>
+          </div>
+
+          <!-- Speedo -->
+          <div class="brand-item">
+            <a href="shop.html?brand=speedo" title="Speedo">
+              <img src="Asset/Logo Sepatu/speedo.png" alt="Speedo" class="brand-logo-img">
+            </a>
+          </div>
+        </div>
+
+        <button class="brand-nav-btn brand-next" id="brandNext" aria-label="Next Brands">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- SECTION 3: SHOP BY CATEGORY (URUTAN NO. 2) -->
+    <section class="category-section" id="categories">
+      <div class="category-container">
+        
+        <h2 class="section-title-italic">Shop by Category</h2>
+
+        <div class="category-grid">
+          
+          <!-- Card 1: MEN'S -->
+          <div class="category-card" id="cardMen">
+            <div class="cat-card-overlay"></div>
+            <img src="Asset/Category/men.jpg" alt="Men's Sports Gear" class="cat-card-bg">
+            <div class="cat-card-content">
+              <h3 class="cat-title">MEN’S</h3>
+              <div class="cat-actions">
+                <a href="shop.html?gender=men" class="cat-btn">All Categories <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+                <a href="shop.html?gender=men&category=running" class="cat-btn">Footwear <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+                <a href="shop.html?gender=men" class="cat-btn">Apparel <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: WOMEN'S -->
+          <div class="category-card" id="cardWomen">
+            <div class="cat-card-overlay"></div>
+            <img src="Asset/Category/women.jpg" alt="Women's Sports Gear" class="cat-card-bg">
+            <div class="cat-card-content">
+              <h3 class="cat-title">WOMEN’S</h3>
+              <div class="cat-actions">
+                <a href="shop.html?gender=women" class="cat-btn">All Categories <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+                <a href="shop.html?gender=women&category=running" class="cat-btn">Footwear <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+                <a href="shop.html?gender=women" class="cat-btn">Apparel <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: KIDS -->
+          <div class="category-card" id="cardKids">
+            <div class="cat-card-overlay"></div>
+            <img src="Asset/Category/kids.jpg" alt="Kids Sports Gear" class="cat-card-bg">
+            <div class="cat-card-content">
+              <h3 class="cat-title">KIDS</h3>
+              <div class="cat-actions">
+                <a href="shop.html?gender=kids" class="cat-btn">All Categories <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+                <a href="shop.html?gender=kids&category=running" class="cat-btn">Footwear <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+                <a href="shop.html?gender=kids" class="cat-btn">Apparel <i class="fa-solid fa-chevron-right icon-sm"></i></a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 4: NEWEST COLLECTION (URUTAN NO. 2 & 3) -->
+    <section class="collection-section" id="newestCollection">
+      <div class="collection-container">
+        
+        <!-- Header Bar Dark Banner -->
+        <div class="collection-header-bar">
+          <h2 class="collection-header-title">Newest Collection</h2>
+          <a href="shop.html" class="btn-view-more">View More Products</a>
+        </div>
+
+        <!-- Product Carousel Shelf -->
+        <div class="product-shelf-wrapper">
+          <button class="shelf-nav-btn shelf-prev" id="shelfPrev" aria-label="Previous Products">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+
+          <div class="product-shelf-track" id="shelfTrack">
+            
+            <!-- Product 1: Nike Pegasus Plus -->
+            <div class="product-card" data-id="nike-pegasus-plus">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif" alt="Nike Pegasus Plus Men's Road Running" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">Nike Pegasus Plus Men's Road Running Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 2.499.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product 2: Nike Zoom Fly 6 -->
+            <div class="product-card" data-id="nike-zoom-fly-6">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/ZOOM+FLY+6.avif" alt="Nike Zoom Fly 6 Men's Road Racing" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">Nike Zoom Fly 6 Men's Road Racing Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 2.699.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product 3: W Nike Air Zoom Pegasus 42 -->
+            <div class="product-card" data-id="nike-w-pegasus-42">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Woman/Running/W+NIKE+AIR+ZOOM+PEGASUS+42.avif" alt="W Nike Air Zoom Pegasus 42 Women's" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">W Nike Air Zoom Pegasus 42 Women's Running</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 2.099.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product 4: Nike Alphafly 4 -->
+            <div class="product-card" data-id="nike-alphafly-4">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/Alphafly4.avif" alt="Nike Alphafly 4 Men's Road Racing" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">Nike Alphafly 4 Men's Road Racing Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 3.999.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product 5: W Nike Vomero 18 -->
+            <div class="product-card" data-id="nike-w-vomero-18">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Woman/Running/W+NIKE+VOMERO+18.avif" alt="W Nike Vomero 18 Women's Running" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">W Nike Vomero 18 Women's Road Running Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 2.299.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product 6: Nike Structure Plus -->
+            <div class="product-card" data-id="nike-structure-plus">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/NIKE+STRUCTURE+PLUS.avif" alt="Nike Structure Plus Men's Running" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">Nike Structure Plus Men's Road Running Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 1.949.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product 7: W Pegasus 42 EasyOn -->
+            <div class="product-card" data-id="nike-w-pegasus-easyon">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Woman/Running/W+PEGASUS+42+EASYON.avif" alt="W Pegasus 42 EasyOn Women's" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">W Pegasus 42 EasyOn Women's Running Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 2.099.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product 8: Nike Vomero Plus -->
+            <div class="product-card" data-id="nike-vomero-plus">
+              <div class="prod-badge-new">NEW</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/NIKE+VOMERO+PLUS.avif" alt="Nike Vomero Plus Men's Running" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <span class="prod-brand">Nike</span>
+                <h4 class="prod-name">Nike Vomero Plus Men's Performance Running</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price">Rp 2.199.000</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <button class="shelf-nav-btn shelf-next" id="shelfNext" aria-label="Next Products">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+
+        <!-- Shelf Pagination Indicators -->
+        <div class="shelf-dots" id="shelfDots">
+          <span class="shelf-dot active" data-index="0"></span>
+          <span class="shelf-dot" data-index="1"></span>
+          <span class="shelf-dot" data-index="2"></span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 5: POSTER SLIDER (DIBAWAH NEWEST COLLECTION) -->
+    <section class="poster-slider-section" id="posterSlider">
+      <div class="poster-carousel-container">
+        
+        <div class="poster-track" id="posterTrack">
+          <!-- Slide 1: Spalding -->
+          <div class="poster-slide">
+            <a href="#promo-spalding" class="poster-slide-link">
+              <img src="Asset/Poster/Screenshot 2026-09-23 142647.png" alt="Spalding - Made For Every Court" class="poster-banner-img">
+            </a>
+          </div>
+
+          <!-- Slide 2: Prince -->
+          <div class="poster-slide">
+            <a href="#promo-prince" class="poster-slide-link">
+              <img src="Asset/Poster/Screenshot 2026-09-23 142624.png" alt="Prince - Own The Court, Rule The Style" class="poster-banner-img">
+            </a>
+          </div>
+
+          <!-- Slide 3: Astec -->
+          <div class="poster-slide">
+            <a href="#promo-astec-poster" class="poster-slide-link">
+              <img src="Asset/Poster/Screenshot 2026-09-23 142531.png" alt="Astec - Beli Sekarang" class="poster-banner-img">
+            </a>
+          </div>
+        </div>
+
+        <!-- Pagination Dots -->
+        <div class="poster-dots" id="posterDots">
+          <span class="poster-dot active" data-index="0"></span>
+          <span class="poster-dot" data-index="1"></span>
+          <span class="poster-dot" data-index="2"></span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION: SHOP BY SIZE (DIATAS POSTER SALE SESUAI CONTOH) -->
+    <section class="size-section" id="shopBySize">
+      <div class="size-container">
+        
+        <h2 class="section-title-italic">Shop by Size</h2>
+
+        <div class="size-grid">
+          
+          <!-- Card 1: MEN FOOTWEAR -->
+          <div class="size-card">
+            <div class="size-card-header">
+              <h3>MEN FOOTWEAR</h3>
+            </div>
+            <div class="size-card-body">
+              <a href="shop.html?gender=men&size=US+6.5" class="size-pill"><span class="size-us">US 6.5</span><span class="size-eu">EU 39.5</span></a>
+              <a href="shop.html?gender=men&size=US+7" class="size-pill"><span class="size-us">US 7</span><span class="size-eu">EU 40</span></a>
+              <a href="shop.html?gender=men&size=US+7.5" class="size-pill"><span class="size-us">US 7.5</span><span class="size-eu">EU 40.5</span></a>
+              <a href="shop.html?gender=men&size=US+8" class="size-pill"><span class="size-us">US 8</span><span class="size-eu">EU 41.5</span></a>
+              <a href="shop.html?gender=men&size=US+8.5" class="size-pill"><span class="size-us">US 8.5</span><span class="size-eu">EU 42</span></a>
+              <a href="shop.html?gender=men&size=US+9" class="size-pill"><span class="size-us">US 9</span><span class="size-eu">EU 42.5</span></a>
+              <a href="shop.html?gender=men&size=US+9.5" class="size-pill"><span class="size-us">US 9.5</span><span class="size-eu">EU 43</span></a>
+              <a href="shop.html?gender=men&size=US+10" class="size-pill"><span class="size-us">US 10</span><span class="size-eu">EU 44</span></a>
+              <a href="shop.html?gender=men&size=US+10.5" class="size-pill"><span class="size-us">US 10.5</span><span class="size-eu">EU 44.5</span></a>
+              <a href="shop.html?gender=men&size=US+11" class="size-pill"><span class="size-us">US 11</span><span class="size-eu">EU 45</span></a>
+              <a href="shop.html?gender=men&size=US+11.5" class="size-pill"><span class="size-us">US 11.5</span><span class="size-eu">EU 45.5</span></a>
+              <a href="shop.html?gender=men&size=US+12" class="size-pill"><span class="size-us">US 12</span><span class="size-eu">EU 46</span></a>
+            </div>
+          </div>
+
+          <!-- Card 2: WOMEN FOOTWEAR -->
+          <div class="size-card">
+            <div class="size-card-header">
+              <h3>WOMEN FOOTWEAR</h3>
+            </div>
+            <div class="size-card-body">
+              <a href="shop.html?gender=women&size=US+5" class="size-pill"><span class="size-us">US 5</span><span class="size-eu">EU 35</span></a>
+              <a href="shop.html?gender=women&size=US+5.5" class="size-pill"><span class="size-us">US 5.5</span><span class="size-eu">EU 36</span></a>
+              <a href="shop.html?gender=women&size=US+6" class="size-pill"><span class="size-us">US 6</span><span class="size-eu">EU 36.5</span></a>
+              <a href="shop.html?gender=women&size=US+6.5" class="size-pill"><span class="size-us">US 6.5</span><span class="size-eu">EU 37</span></a>
+              <a href="shop.html?gender=women&size=US+7" class="size-pill"><span class="size-us">US 7</span><span class="size-eu">EU 37.5</span></a>
+              <a href="shop.html?gender=women&size=US+7.5" class="size-pill"><span class="size-us">US 7.5</span><span class="size-eu">EU 38</span></a>
+              <a href="shop.html?gender=women&size=US+8" class="size-pill"><span class="size-us">US 8</span><span class="size-eu">EU 39</span></a>
+              <a href="shop.html?gender=women&size=US+8.5" class="size-pill"><span class="size-us">US 8.5</span><span class="size-eu">EU 40</span></a>
+              <a href="shop.html?gender=women&size=US+9" class="size-pill"><span class="size-us">US 9</span><span class="size-eu">EU 40.5</span></a>
+              <a href="shop.html?gender=women&size=US+9.5" class="size-pill"><span class="size-us">US 9.5</span><span class="size-eu">EU 41</span></a>
+              <a href="shop.html?gender=women&size=US+10" class="size-pill"><span class="size-us">US 10</span><span class="size-eu">EU 41.5</span></a>
+              <a href="shop.html?gender=women&size=US+11" class="size-pill"><span class="size-us">US 11</span><span class="size-eu">EU 43</span></a>
+            </div>
+          </div>
+
+          <!-- Card 3: KIDS FOOTWEAR -->
+          <div class="size-card">
+            <div class="size-card-header">
+              <h3>KIDS FOOTWEAR</h3>
+            </div>
+            <div class="size-card-body">
+              <a href="shop.html?gender=kids&size=US+1" class="size-pill"><span class="size-us">US 1</span><span class="size-eu">EU 16</span></a>
+              <a href="shop.html?gender=kids&size=US+1.5" class="size-pill"><span class="size-us">US 1.5</span><span class="size-eu">EU 16.5</span></a>
+              <a href="shop.html?gender=kids&size=US+2" class="size-pill"><span class="size-us">US 2</span><span class="size-eu">EU 17</span></a>
+              <a href="shop.html?gender=kids&size=US+2.5" class="size-pill"><span class="size-us">US 2.5</span><span class="size-eu">EU 18</span></a>
+              <a href="shop.html?gender=kids&size=US+3" class="size-pill"><span class="size-us">US 3</span><span class="size-eu">EU 18.5</span></a>
+              <a href="shop.html?gender=kids&size=US+4" class="size-pill"><span class="size-us">US 4</span><span class="size-eu">EU 20</span></a>
+              <a href="shop.html?gender=kids&size=US+5" class="size-pill"><span class="size-us">US 5</span><span class="size-eu">EU 21</span></a>
+              <a href="shop.html?gender=kids&size=US+6" class="size-pill"><span class="size-us">US 6</span><span class="size-eu">EU 22.5</span></a>
+              <a href="shop.html?gender=kids&size=US+7" class="size-pill"><span class="size-us">US 7</span><span class="size-eu">EU 23.5</span></a>
+              <a href="shop.html?gender=kids&size=US+8" class="size-pill"><span class="size-us">US 8</span><span class="size-eu">EU 25</span></a>
+              <a href="shop.html?gender=kids&size=US+9" class="size-pill"><span class="size-us">US 9</span><span class="size-eu">EU 26</span></a>
+              <a href="shop.html?gender=kids&size=US+10" class="size-pill"><span class="size-us">US 10</span><span class="size-eu">EU 27.5</span></a>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 6: SALE SECTION (URUTAN NO. 4 SESUAI CONTOH 4) -->
+    <section class="sale-section" id="sale">
+      <div class="sale-container">
+        
+        <!-- Sale Banner 50% Off -->
+        <div class="sale-banner-wrapper">
+          <a href="#sale-promo" class="sale-banner-link">
+            <img src="Asset/Poster/Sale poster.png" alt="Sale Up To 50% Off - Shop Now" class="sale-banner-img">
+          </a>
+        </div>
+
+        <!-- Sale Products Row -->
+        <div class="sale-shelf-wrapper">
+          <div class="sale-shelf-track" id="saleShelfTrack">
+            
+            <!-- Sale Product 1: Nike Vomero 17 -->
+            <div class="product-card sale-card" data-id="nike-vomero-plus-cm">
+              <div class="prod-badge-sale">SALE</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/NIKE+VOMERO+PLUS+CM.avif" alt="Nike Vomero Plus Men's Running" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <h4 class="prod-name">Nike Vomero 17 Men's Road Running Shoes - Obsidian</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price-sale">Rp 1.149.500</span>
+                  <span class="prod-price-original">Rp 2.299.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sale Product 2: Nike Structure 25 -->
+            <div class="product-card sale-card" data-id="nike-structure-plus">
+              <div class="prod-badge-sale">SALE</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/NIKE+STRUCTURE+PLUS.avif" alt="Nike Structure Plus Men's Running" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <h4 class="prod-name">Nike Structure 25 Men's Road Running Shoes - Platinum</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price-sale">Rp 974.500</span>
+                  <span class="prod-price-original">Rp 1.949.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sale Product 3: W Pegasus EasyOn -->
+            <div class="product-card sale-card" data-id="nike-w-pegasus-easyon">
+              <div class="prod-badge-sale">SALE</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Woman/Running/W+PEGASUS+42+EASYON.avif" alt="W Pegasus EasyOn Women's" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <h4 class="prod-name">W Nike Pegasus EasyOn Women's Running Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price-sale">Rp 1.049.500</span>
+                  <span class="prod-price-original">Rp 2.099.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sale Product 4: W ZoomX Vaporfly -->
+            <div class="product-card sale-card" data-id="nike-w-vaporfly-next-4">
+              <div class="prod-badge-sale">SALE</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Woman/Running/W+ZOOMX+VAPORFLY+NEXT%+4++KH.avif" alt="W ZoomX Vaporfly NEXT% Women's" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <h4 class="prod-name">W ZoomX Vaporfly NEXT% 3 Women's Racing Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price-sale">Rp 1.949.500</span>
+                  <span class="prod-price-original">Rp 3.899.000</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sale Product 5: Nike Vomero Plus -->
+            <div class="product-card sale-card" data-id="nike-vomero-plus">
+              <div class="prod-badge-sale">SALE</div>
+              <div class="prod-img-box">
+                <img src="Asset/Sepatu/Nike/Men/Running/NIKE+VOMERO+PLUS.avif" alt="Nike Vomero Plus Men's Performance" class="prod-img">
+              </div>
+              <div class="prod-info">
+                <h4 class="prod-name">Nike Vomero Plus Men's Performance Running Shoes</h4>
+                <div class="prod-price-wrap">
+                  <span class="prod-price-sale">Rp 1.099.500</span>
+                  <span class="prod-price-original">Rp 2.199.000</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-main">
+      <div class="footer-container">
+        <div class="footer-col">
+          <img src="Asset/Logo/logo.png" alt="Sports Station Logo" class="footer-logo">
+          <p class="footer-desc">Sports Station adalah toko ritel olahraga multi-merek nomor satu di Indonesia yang menyediakan koleksi sepatu, pakaian, dan perlengkapan olahraga terbaik untuk segala aktivitas Anda.</p>
+          <div class="social-links">
+            <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">BANTUAN</h4>
+          <ul class="footer-links">
+            <li><a href="#">Cara Pemesanan</a></li>
+            <li><a href="#">Konfirmasi Pembayaran</a></li>
+            <li><a href="#">Pelacakan Pesanan</a></li>
+            <li><a href="#">Kebijakan Pengembalian</a></li>
+            <li><a href="#size-guide" id="homeSizeGuideLink">Panduan Ukuran (Size Guide)</a></li>
+            <li><a href="#">FAQ / Pertanyaan Umum</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">KATEGORI</h4>
+          <ul class="footer-links">
+            <li><a href="#men">Sepatu Pria</a></li>
+            <li><a href="#women">Sepatu Wanita</a></li>
+            <li><a href="#kids">Sepatu Anak</a></li>
+            <li><a href="#running">Running & Jogging</a></li>
+            <li><a href="#lifestyle">Casual & Lifestyle</a></li>
+            <li><a href="#equipment">Aksesoris Olahraga</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">TENTANG KAMI</h4>
+          <ul class="footer-links">
+            <li><a href="#">Tentang Sports Station</a></li>
+            <li><a href="#">Lokasi Toko Resmi</a></li>
+            <li><a href="#">Karir & Lowongan</a></li>
+            <li><a href="#">Syarat & Ketentuan</a></li>
+            <li><a href="#">Kebijakan Privasi</a></li>
+            <li><a href="#">Hubungi Kami</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-container bottom-wrap">
+        <p class="copyright-text">© 2026 PT MAP Aktif Adiperkasa Tbk - Sports Station. All Rights Reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- FLOATING WIDGETS -->
+  <!-- Floating Chat Button (Hitam Bundar seperti di screenshot Contoh/1-4) -->
+  <button class="floating-chat-btn" id="floatingChatBtn" aria-label="Customer Chat">
+    <i class="fa-solid fa-comment"></i>
+  </button>
+
+  <!-- Floating Scroll To Top Button (Putih Bundar seperti di screenshot Contoh/2-4) -->
+  <button class="scroll-to-top-btn" id="scrollTopBtn" aria-label="Scroll to top">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+
+  <script src="size-guide.js"></script>
+  <script src="cart-service.js"></script>
+  <script src="auth.js"></script>
+  <script src="script.js?v=4"></script>
+</body>
+</html>
