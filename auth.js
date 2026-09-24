@@ -64,6 +64,7 @@
         isLoggedIn: true
       };
       saveUser(adminUser);
+      syncAuthWithSupabase('login', 'admin@sportsstation.id', 'SportsStationAdmin123!', 'Administrator', 'admin');
       return { success: true, user: adminUser, isAdmin: true };
     }
 
