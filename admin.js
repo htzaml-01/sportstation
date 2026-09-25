@@ -18,48 +18,113 @@ let productBrandFilter = '';
 let productStockFilter = '';
 let currentInvoiceOrder = null;
 
-// Sound Notification State
+// Sound Notification State & Global Audio Context
 let isSoundEnabled = localStorage.getItem('SportsStationAdminSound') !== 'false';
 let knownOrderIds = new Set();
 let isInitialOrderLoad = true;
+let globalAudioCtx = null;
+
+function getOrCreateAudioContext() {
+  try {
+    if (!globalAudioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        globalAudioCtx = new AudioContextClass();
+      }
+    }
+    if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+      globalAudioCtx.resume().catch(() => {});
+    }
+  } catch (e) {
+    console.warn('AudioContext init error:', e);
+  }
+  return globalAudioCtx;
+}
+
+// User-gesture listener to auto-unlock AudioContext on any interaction
+function setupAudioUnlockListeners() {
+  const unlock = () => {
+    const ctx = getOrCreateAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+  };
+  ['click', 'touchstart', 'touchend', 'mousedown', 'keydown', 'pointerdown'].forEach(evt => {
+    document.addEventListener(evt, unlock, { once: false, passive: true });
+    window.addEventListener(evt, unlock, { once: false, passive: true });
+  });
+}
 
 /**
- * Web Audio API Synthesizer - Real-time Chime Notification
+ * High-Fidelity Marketplace POS Cashier Bell & 4-Note Chime Synthesizer
  */
 function playOrderNotificationSound() {
   if (!isSoundEnabled) return;
+
+  // 1. Play Cashier Bell Chime via Web Audio API
   try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
+    const ctx = getOrCreateAudioContext();
+    if (ctx) {
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
 
-    // 4-note cheerful POS cashier / marketplace bell chime: C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
-    const notes = [
-      { freq: 523.25, time: 0, dur: 0.16 },
-      { freq: 659.25, time: 0.10, dur: 0.16 },
-      { freq: 783.99, time: 0.20, dur: 0.20 },
-      { freq: 1046.50, time: 0.32, dur: 0.40 }
-    ];
+      const now = ctx.currentTime;
 
-    notes.forEach(n => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.time);
+      // 4-Note Upbeat Marketplace Cashier Chime (G5 -> C6 -> E6 -> G6 + Cash Register Bell)
+      const notes = [
+        { freq: 783.99, time: 0, dur: 0.18, vol: 0.8 },
+        { freq: 1046.50, time: 0.12, dur: 0.20, vol: 0.9 },
+        { freq: 1318.51, time: 0.24, dur: 0.22, vol: 0.95 },
+        { freq: 1567.98, time: 0.38, dur: 0.60, vol: 1.0 }
+      ];
 
-      gain.gain.setValueAtTime(0, ctx.currentTime + n.time);
-      gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + n.time + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.time + n.dur);
+      notes.forEach(n => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(n.freq, now + n.time);
 
-      osc.start(ctx.currentTime + n.time);
-      osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
-    });
+        gain.gain.setValueAtTime(0, now + n.time);
+        gain.gain.linearRampToValueAtTime(n.vol * 0.9, now + n.time + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + n.time + n.dur);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + n.time);
+        osc.stop(now + n.time + n.dur + 0.08);
+
+        // Overtone harmonic for resonant bell clarity
+        const harmonic = ctx.createOscillator();
+        const harmGain = ctx.createGain();
+        harmonic.type = 'sine';
+        harmonic.frequency.setValueAtTime(n.freq * 2, now + n.time);
+        harmGain.gain.setValueAtTime(0, now + n.time);
+        harmGain.gain.linearRampToValueAtTime(0.3, now + n.time + 0.01);
+        harmGain.gain.exponentialRampToValueAtTime(0.001, now + n.time + n.dur * 0.6);
+        harmonic.connect(harmGain);
+        harmGain.connect(ctx.destination);
+        harmonic.start(now + n.time);
+        harmonic.stop(now + n.time + n.dur * 0.6 + 0.05);
+      });
+    }
   } catch (err) {
-    console.warn('Audio play failed:', err);
+    console.warn('AudioContext playback error:', err);
   }
+
+  // 2. Speech Synthesis voice announcement as bonus backup
+  try {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance('Pesanan baru masuk!');
+      utterance.lang = 'id-ID';
+      utterance.rate = 1.15;
+      utterance.volume = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch (e) {}
 }
 
 function toggleAdminSound() {
@@ -67,6 +132,8 @@ function toggleAdminSound() {
   localStorage.setItem('SportsStationAdminSound', isSoundEnabled ? 'true' : 'false');
   updateSoundUI();
   if (isSoundEnabled) {
+    const ctx = getOrCreateAudioContext();
+    if (ctx && ctx.state === 'suspended') ctx.resume();
     playOrderNotificationSound();
     if (window.SportsStationAuth) {
       window.SportsStationAuth.showToast('🔔 Suara notifikasi pesanan masuk: DIAKTIFKAN');
@@ -79,9 +146,11 @@ function toggleAdminSound() {
 }
 
 function testAdminSound() {
+  const ctx = getOrCreateAudioContext();
+  if (ctx && ctx.state === 'suspended') ctx.resume();
   playOrderNotificationSound();
   if (window.SportsStationAuth) {
-    window.SportsStationAuth.showToast('🔊 Memutar nada tes notifikasi pesanan masuk...');
+    window.SportsStationAuth.showToast('🔊 Memutar suara lonceng & notifikasi pesanan masuk...');
   }
 }
 
@@ -110,6 +179,7 @@ window.toggleAdminSound = toggleAdminSound;
 window.testAdminSound = testAdminSound;
 
 function initAdminDashboard() {
+  setupAudioUnlockListeners();
   checkAdminAuth();
   setupSidebarNavigation();
   updateDatabaseStatusUI();
@@ -290,6 +360,9 @@ function setupLiveSync() {
       const channel = new BroadcastChannel('sportsstation_orders_channel');
       channel.onmessage = (msg) => {
         if (msg.data === 'NEW_ORDER' || msg.data === 'ORDER_UPDATED') {
+          if (msg.data === 'NEW_ORDER') {
+            playOrderNotificationSound();
+          }
           loadOrdersFromStorage();
           if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
             syncFromSupabaseCloud();
@@ -306,6 +379,9 @@ function setupLiveSync() {
     // Abaikan event sintetis dari window sendiri untuk mencegah re-entry loop saat saveCatalogToStorage
     if (e && e.isTrusted === false) return;
     if (!e.key || e.key === 'SportsStationOrders' || e.key === 'SportsStationCatalog') {
+      if (e.key === 'SportsStationOrders') {
+        loadOrdersFromStorage();
+      }
       refreshAdminData();
       if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
         syncFromSupabaseCloud();
@@ -333,6 +409,9 @@ function setupSupabaseRealtime() {
     sb.channel('realtime_admin_dashboard')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
         console.log('⚡ Supabase Realtime Order Event:', payload);
+        if (payload.eventType === 'INSERT') {
+          playOrderNotificationSound();
+        }
         await syncFromSupabaseCloud();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, async (payload) => {
