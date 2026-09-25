@@ -30,36 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Check if user is already logged in
-  if (window.SportsStationAuth) {
-    const currentUser = window.SportsStationAuth.getUser();
-    if (currentUser) {
-      if (currentUser.role === 'admin' && !urlParams.get('logout')) {
-        window.location.href = 'admin.html';
-        return;
-      }
-      showAlert(`
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <span>Anda saat ini masuk sebagai <strong>${currentUser.name}</strong> (${currentUser.email}).</span>
-          <div style="display: flex; gap: 8px; margin-top: 4px;">
-            <a href="${getRedirectUrl()}" style="padding: 5px 12px; background: #0f172a; color: #fff; border-radius: 4px; font-size: 12px; text-decoration: none; font-weight: 600;">Lanjut ke Toko</a>
-            <button type="button" id="loginPageLogoutBtn" style="padding: 5px 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Keluar dari Akun Ini</button>
-          </div>
-        </div>
-      `, 'info');
-
-      setTimeout(() => {
-        const btn = document.getElementById('loginPageLogoutBtn');
-        if (btn) {
-          btn.addEventListener('click', () => {
-            window.SportsStationAuth.logout();
-            hideAlert();
-          });
-        }
-      }, 50);
-    }
-  }
-
   // Toggle Password Visibility
   if (togglePasswordBtn && passwordInput) {
     togglePasswordBtn.addEventListener('click', () => {
@@ -128,6 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
       emailInput.value = 'aznidaniswata@gmail.com';
       passwordInput.value = 'SportsStation123';
       hideAlert();
+      if (authForm) {
+        authForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
     });
   }
 
@@ -139,6 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
       emailInput.value = 'admin';
       passwordInput.value = 'admin123';
       hideAlert();
+      if (authForm) {
+        authForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
     });
   }
 

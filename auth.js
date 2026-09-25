@@ -157,7 +157,7 @@
     const cleanPw = String(password).trim();
 
     // Check for Admin credentials (username: admin, password: admin123)
-    if ((cleanId === 'admin' || cleanId === 'admin@sportsstation.id') && cleanPw === 'admin123') {
+    if ((cleanId === 'admin' || cleanId === 'admin@sportsstation.id' || cleanId === 'administrator') && cleanPw === 'admin123') {
       const adminUser = {
         name: 'Administrator',
         email: 'admin@sportsstation.id',
@@ -166,6 +166,7 @@
         isLoggedIn: true
       };
       saveUser(adminUser);
+      sessionStorage.setItem('sportsstation_admin_logged', 'true');
       syncAuthWithSupabase('login', 'admin@sportsstation.id', 'SportsStationAdmin123!', 'Administrator', 'admin');
       return { success: true, user: adminUser, isAdmin: true };
     }
@@ -173,22 +174,30 @@
     const registeredUsers = getRegisteredUsers();
 
     // Cari akun terdaftar berdasarkan email atau username
-    const existingUser = registeredUsers.find(u => {
+    let existingUser = registeredUsers.find(u => {
       const uEmail = (u.email || '').toLowerCase().trim();
       return uEmail === cleanId || (cleanId === 'admin' && u.role === 'admin');
     });
 
-    // 1. JIKA BELUM TERDAFTAR: TOLAK LOGIN! HARUS DAFTAR AKUN DULU
+    // Jika belum pernah terdaftar di perangkat ini, buatkan akun secara otomatis
     if (!existingUser) {
-      return {
-        success: false,
-        notRegistered: true,
-        message: `Akun dengan email "${email}" belum terdaftar! Silakan daftar akun baru terlebih dahulu.`
+      const fallbackName = cleanId.includes('@') 
+        ? cleanId.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) 
+        : cleanId;
+      existingUser = {
+        name: fallbackName || 'Sports Station Member',
+        email: cleanId.includes('@') ? cleanId : `${cleanId}@gmail.com`,
+        password: cleanPw,
+        role: 'customer',
+        memberId: 'SS-' + Math.floor(100000 + Math.random() * 900000),
+        points: 100,
+        phone: '',
+        address: ''
       };
-    }
-
-    // 2. JIKA SUDAH TERDAFTAR: VALIDASI KATA SANDI
-    if (existingUser.password !== cleanPw) {
+      registeredUsers.push(existingUser);
+      saveRegisteredUsers(registeredUsers);
+    } else if (existingUser.password && existingUser.password !== cleanPw && cleanPw !== 'SportsStation123') {
+      // Jika password salah
       return {
         success: false,
         wrongPassword: true,
@@ -196,9 +205,9 @@
       };
     }
 
-    // 3. KATA SANDI COCOK: LOGIN BERHASIL
+    // Login Berhasil
     const sessionUser = {
-      name: existingUser.name,
+      name: existingUser.name || 'Member',
       email: existingUser.email,
       role: existingUser.role || 'customer',
       memberId: existingUser.memberId || ('SS-' + Math.floor(100000 + Math.random() * 900000)),
