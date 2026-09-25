@@ -110,23 +110,6 @@
         }
       });
 
-      // Jika ada session user yang sedang aktif, pastikan terdaftar agar tidak terkunci
-      const cur = getCurrentUser();
-      if (cur && cur.email) {
-        const exists = list.some(u => (u.email || '').toLowerCase() === cur.email.toLowerCase());
-        if (!exists) {
-          list.push({
-            name: cur.name || 'Member',
-            email: cur.email,
-            password: 'SportsStation123',
-            role: cur.role || 'customer',
-            memberId: cur.memberId || 'SS-USER-01',
-            points: 100
-          });
-          modified = true;
-        }
-      }
-
       if (modified || !raw) {
         localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(list));
       }
@@ -174,34 +157,26 @@
     const registeredUsers = getRegisteredUsers();
 
     // Cari akun terdaftar berdasarkan email atau username
-    let existingUser = registeredUsers.find(u => {
+    const existingUser = registeredUsers.find(u => {
       const uEmail = (u.email || '').toLowerCase().trim();
       return uEmail === cleanId || (cleanId === 'admin' && u.role === 'admin');
     });
 
-    // Jika belum pernah terdaftar di perangkat ini, buatkan akun secara otomatis
+    // Jika akun belum terdaftar, TOLAK LOGIN dan instruksikan untuk Sign Up (Daftar Akun)
     if (!existingUser) {
-      const fallbackName = cleanId.includes('@') 
-        ? cleanId.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) 
-        : cleanId;
-      existingUser = {
-        name: fallbackName || 'Sports Station Member',
-        email: cleanId.includes('@') ? cleanId : `${cleanId}@gmail.com`,
-        password: cleanPw,
-        role: 'customer',
-        memberId: 'SS-' + Math.floor(100000 + Math.random() * 900000),
-        points: 100,
-        phone: '',
-        address: ''
+      return {
+        success: false,
+        notRegistered: true,
+        message: `Akun dengan email "${cleanId}" belum terdaftar. Silakan klik "Daftar Akun" terlebih dahulu.`
       };
-      registeredUsers.push(existingUser);
-      saveRegisteredUsers(registeredUsers);
-    } else if (existingUser.password && existingUser.password !== cleanPw && cleanPw !== 'SportsStation123') {
-      // Jika password salah
+    }
+
+    // Validasi kata sandi
+    if (existingUser.password && existingUser.password !== cleanPw) {
       return {
         success: false,
         wrongPassword: true,
-        message: 'Kata sandi yang Anda masukkan salah. Silakan coba lagi.'
+        message: 'Kata sandi yang Anda masukkan salah. Silakan periksa kembali.'
       };
     }
 
