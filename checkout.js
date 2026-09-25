@@ -4,16 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Guard: Wajib login untuk mengakses halaman checkout
-  const currentUser = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
-  if (!currentUser || !currentUser.isLoggedIn) {
-    if (window.SportsStationAuth) {
-      window.SportsStationAuth.showToast('⚠️ Silakan masuk (login) terlebih dahulu untuk melanjutkan checkout.');
-    }
-    window.location.href = 'login.html?redirect=checkout.html';
-    return;
-  }
-
   initCustomerData();
   initCheckoutMap();
   initCourierSelection();
@@ -530,18 +520,6 @@ function initPlaceOrder() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    // Verifikasi kembali sesi login pengguna
-    const currentUser = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
-    if (!currentUser || !currentUser.isLoggedIn) {
-      if (window.SportsStationAuth) {
-        window.SportsStationAuth.showToast('⚠️ Sesi login berakhir. Silakan login terlebih dahulu untuk checkout.');
-      }
-      setTimeout(() => {
-        window.location.href = 'login.html?redirect=checkout.html';
-      }, 500);
-      return;
-    }
 
     const name = document.getElementById('customerName').value.trim();
     const email = document.getElementById('customerEmail').value.trim();
