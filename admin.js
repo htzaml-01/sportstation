@@ -119,33 +119,53 @@ function initAdminDashboard() {
   setupModals();
   setupLiveSync();
 
-  // Polling sinkronisasi data pesanan secara halus tiap 2.5 detik
-  setInterval(() => {
-    loadOrdersFromStorage();
-    renderSalesOverview();
-    renderRecentOrdersOverview();
-    renderOrdersTable();
-    renderFinancialLedger();
-  }, 2500);
-
-  // Jika Supabase terhubung, sinkronkan data cloud secara asinkron
+  // Sinkronisasi realtime awal jika Supabase terhubung
   if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
     syncFromSupabaseCloud();
+    setupSupabaseRealtime();
   }
+
+  // Active Real-time Polling: Memastikan setiap pesanan baru langsung masuk dalam 1.5 detik tanpa refresh
+  setInterval(async () => {
+    if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+      await syncFromSupabaseCloud();
+    } else {
+      loadOrdersFromStorage();
+      renderSalesOverview();
+      renderRecentOrdersOverview();
+      renderOrdersTable();
+      renderFinancialLedger();
+    }
+  }, 1500);
 }
+
+let isSyncingCloud = false;
 
 async function syncFromSupabaseCloud() {
   if (!window.SportsStationDB || !window.SportsStationDB.isConfigured()) return;
+  if (isSyncingCloud) return;
+  isSyncingCloud = true;
+
   try {
-    const products = await window.SportsStationDB.fetchProducts();
-    if (products && products.length > 0) {
-      catalogProducts = products;
-      renderProductsTable();
-      renderSalesOverview();
-    }
     const orders = await window.SportsStationDB.fetchOrders();
-    if (orders && orders.length > 0) {
+    if (orders && Array.isArray(orders)) {
+      // Deteksi adanya orderan baru yang masuk dari perangkat lain / cloud
+      if (!isInitialOrderLoad && knownOrderIds.size > 0) {
+        const newlyAdded = orders.filter(o => !knownOrderIds.has(o.id));
+        if (newlyAdded.length > 0) {
+          playOrderNotificationSound();
+          const first = newlyAdded[0];
+          const custName = first.customer ? first.customer.name : 'Pelanggan';
+          if (window.SportsStationAuth) {
+            window.SportsStationAuth.showToast(`🔔 Pesanan Baru Masuk! ${first.id} (${formatRupiah(first.total)}) dari ${custName}`);
+          }
+        }
+      }
+
       ordersData = orders;
+      knownOrderIds = new Set(ordersData.map(o => o.id));
+      isInitialOrderLoad = false;
+
       renderOrdersTable();
       renderRecentOrdersOverview();
       renderFinancialLedger();
@@ -154,6 +174,8 @@ async function syncFromSupabaseCloud() {
     updateDatabaseStatusUI();
   } catch (e) {
     console.warn('Gagal sync Supabase di admin:', e);
+  } finally {
+    isSyncingCloud = false;
   }
 }
 
@@ -262,20 +284,67 @@ function refreshAdminData() {
 window.refreshAdminData = refreshAdminData;
 
 function setupLiveSync() {
-  // Real-time synchronization across browser tabs and same-window actions
+  // 1. Zero-latency cross-tab communication via BroadcastChannel
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      const channel = new BroadcastChannel('sportsstation_orders_channel');
+      channel.onmessage = (msg) => {
+        if (msg.data === 'NEW_ORDER' || msg.data === 'ORDER_UPDATED') {
+          loadOrdersFromStorage();
+          if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+            syncFromSupabaseCloud();
+          } else {
+            refreshAdminData();
+          }
+        }
+      };
+    } catch (e) {}
+  }
+
+  // 2. Real-time synchronization across browser tabs and same-window actions
   window.addEventListener('storage', (e) => {
     // Abaikan event sintetis dari window sendiri untuk mencegah re-entry loop saat saveCatalogToStorage
     if (e && e.isTrusted === false) return;
     if (!e.key || e.key === 'SportsStationOrders' || e.key === 'SportsStationCatalog') {
       refreshAdminData();
+      if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+        syncFromSupabaseCloud();
+      }
     }
   });
 
+  // 3. Tab visibility sync
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       refreshAdminData();
+      if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
+        syncFromSupabaseCloud();
+      }
     }
   });
+}
+
+function setupSupabaseRealtime() {
+  if (!window.SportsStationDB || !window.SportsStationDB.isConfigured()) return;
+  const sb = window.SportsStationDB.getClient();
+  if (!sb || typeof sb.channel !== 'function') return;
+
+  try {
+    sb.channel('realtime_admin_dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
+        console.log('⚡ Supabase Realtime Order Event:', payload);
+        await syncFromSupabaseCloud();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, async (payload) => {
+        console.log('⚡ Supabase Realtime Product Event:', payload);
+        await syncFromSupabaseCloud();
+      })
+      .subscribe((status) => {
+        console.log('⚡ Supabase Realtime Subscription Status:', status);
+      });
+  } catch (err) {
+    console.warn('⚠️ Supabase Realtime subscription error:', err);
+  }
 }
 
 /**

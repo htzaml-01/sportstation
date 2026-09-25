@@ -768,6 +768,13 @@ function saveOrUpdateOrder(partialOrder) {
     if (window.SportsStationDB) {
       window.SportsStationDB.createOrder(partialOrder);
     }
+    // Broadcast for 0ms cross-tab sync
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const channel = new BroadcastChannel('sportsstation_orders_channel');
+        channel.postMessage('NEW_ORDER');
+      } catch (e) {}
+    }
     // Trigger storage event so admin and other tabs update live
     window.dispatchEvent(new Event('storage'));
   } catch (err) {
