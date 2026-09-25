@@ -281,6 +281,20 @@ function setupLiveSync() {
 /**
  * 1. Admin Auth Guard
  */
+function handleAdminLogout(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  sessionStorage.removeItem('sportsstation_admin_logged');
+  localStorage.removeItem('sportsstation_user');
+  if (window.SportsStationAuth && typeof window.SportsStationAuth.logout === 'function') {
+    window.SportsStationAuth.logout();
+  }
+  window.location.href = 'login.html?logout=true';
+}
+window.handleAdminLogout = handleAdminLogout;
+
 function checkAdminAuth() {
   const user = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
   const isSessionAdmin = sessionStorage.getItem('sportsstation_admin_logged') === 'true';
@@ -293,15 +307,7 @@ function checkAdminAuth() {
   // Bind Logout Button
   const logoutBtn = document.getElementById('adminLogoutBtn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      sessionStorage.removeItem('sportsstation_admin_logged');
-      localStorage.removeItem('sportsstation_user');
-      if (window.SportsStationAuth && typeof window.SportsStationAuth.logout === 'function') {
-        window.SportsStationAuth.logout();
-      }
-      window.location.href = 'login.html';
-    });
+    logoutBtn.onclick = handleAdminLogout;
   }
 }
 

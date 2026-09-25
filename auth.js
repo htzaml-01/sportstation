@@ -61,12 +61,12 @@
     updateAllAuthUI();
     showAuthToast('Berhasil keluar dari akun.');
 
-    // Redirect to login or home if on a protected page
-    const pathname = window.location.pathname.toLowerCase().split('/').pop() || 'index.html';
-    if (pathname.includes('profile.html') || pathname.includes('orders.html') || pathname.includes('checkout.html') || pathname.includes('admin.html')) {
+    // Redirect to home if on a protected page (works for clean URLs without .html)
+    const pathname = window.location.pathname.toLowerCase();
+    if (pathname.includes('profile') || pathname.includes('order') || pathname.includes('checkout') || pathname.includes('admin')) {
       setTimeout(() => {
         window.location.href = 'index.html';
-      }, 400);
+      }, 300);
     }
   }
 
