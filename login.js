@@ -20,19 +20,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mode: 'signin' or 'signup'
   let currentMode = 'signin';
 
+  // Check URL parameter (?mode=signup or ?logout=true)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('logout') === 'true' || urlParams.get('action') === 'logout') {
+    localStorage.removeItem('sportsstation_user');
+    sessionStorage.removeItem('sportsstation_admin_logged');
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.logout();
+    }
+  }
+
   // Check if user is already logged in
   if (window.SportsStationAuth) {
     const currentUser = window.SportsStationAuth.getUser();
     if (currentUser) {
-      if (currentUser.role === 'admin') {
+      if (currentUser.role === 'admin' && !urlParams.get('logout')) {
         window.location.href = 'admin.html';
         return;
       }
-      showAlert(`Anda sudah masuk sebagai ${currentUser.name}. Mengalihkan...`, 'success');
+      showAlert(`
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span>Anda saat ini masuk sebagai <strong>${currentUser.name}</strong> (${currentUser.email}).</span>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <a href="${getRedirectUrl()}" style="padding: 5px 12px; background: #0f172a; color: #fff; border-radius: 4px; font-size: 12px; text-decoration: none; font-weight: 600;">Lanjut ke Toko</a>
+            <button type="button" id="loginPageLogoutBtn" style="padding: 5px 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Keluar dari Akun Ini</button>
+          </div>
+        </div>
+      `, 'info');
+
       setTimeout(() => {
-        window.location.href = getRedirectUrl();
-      }, 1000);
-      return;
+        const btn = document.getElementById('loginPageLogoutBtn');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            window.SportsStationAuth.logout();
+            hideAlert();
+          });
+        }
+      }, 50);
     }
   }
 

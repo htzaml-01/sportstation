@@ -515,6 +515,60 @@
         elem.onclick = null;
       }
     });
+
+    // Update Mobile Drawer Account / Logout Section
+    const drawerViewMain = document.getElementById('drawerViewMain');
+    if (drawerViewMain) {
+      let drawerAuthPanel = drawerViewMain.querySelector('.drawer-auth-panel');
+      if (!drawerAuthPanel) {
+        drawerAuthPanel = document.createElement('div');
+        drawerAuthPanel.className = 'drawer-auth-panel';
+        drawerViewMain.appendChild(drawerAuthPanel);
+      }
+
+      if (user) {
+        drawerAuthPanel.innerHTML = `
+          <div style="padding: 16px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; margin-top: auto;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #f95a00, #ea580c); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0;">
+                ${(user.name || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div style="overflow: hidden;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.name || 'Member'}</div>
+                <div style="font-size: 11.5px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email || '-'}</div>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <a href="profile.html" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: 600; color: #334155; text-decoration: none;">
+                <i class="fa-regular fa-id-card"></i> Profil
+              </a>
+              <a href="orders.html" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: 600; color: #334155; text-decoration: none;">
+                <i class="fa-solid fa-bag-shopping"></i> Pesanan
+              </a>
+            </div>
+            <button type="button" class="drawer-logout-action-btn" style="width: 100%; padding: 8px 12px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar (Log Out)
+            </button>
+          </div>
+        `;
+
+        const drawerLogoutBtn = drawerAuthPanel.querySelector('.drawer-logout-action-btn');
+        if (drawerLogoutBtn) {
+          drawerLogoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            logoutUser();
+          });
+        }
+      } else {
+        drawerAuthPanel.innerHTML = `
+          <div style="padding: 16px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; margin-top: auto;">
+            <a href="login.html" style="width: 100%; padding: 10px 16px; background: #f95a00; color: #ffffff; border-radius: 8px; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+              <i class="fa-regular fa-user"></i> Masuk / Daftar Akun
+            </a>
+          </div>
+        `;
+      }
+    }
   }
 
   // Close dropdown when clicking outside

@@ -282,14 +282,24 @@ function setupLiveSync() {
  * 1. Admin Auth Guard
  */
 function checkAdminAuth() {
-  // Mark admin session in sessionStorage so it doesn't overwrite customer profile in localStorage
-  sessionStorage.setItem('sportsstation_admin_logged', 'true');
+  const user = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
+  const isSessionAdmin = sessionStorage.getItem('sportsstation_admin_logged') === 'true';
+
+  // Mark admin session in sessionStorage if logged in as admin
+  if (user && user.role === 'admin') {
+    sessionStorage.setItem('sportsstation_admin_logged', 'true');
+  }
 
   // Bind Logout Button
   const logoutBtn = document.getElementById('adminLogoutBtn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       sessionStorage.removeItem('sportsstation_admin_logged');
+      localStorage.removeItem('sportsstation_user');
+      if (window.SportsStationAuth && typeof window.SportsStationAuth.logout === 'function') {
+        window.SportsStationAuth.logout();
+      }
       window.location.href = 'login.html';
     });
   }
