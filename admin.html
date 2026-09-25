@@ -78,6 +78,15 @@
       </div>
 
       <div class="admin-topbar-right" style="display: flex; align-items: center; gap: 10px;">
+        <!-- Notification Sound Toggle & Test Button -->
+        <button type="button" class="admin-btn-action" id="adminSoundToggleBtn" onclick="toggleAdminSound()" style="padding: 6px 12px; font-size: 12.5px; border-color: #fdba74; background: #fff7ed; color: #c2410c;" title="Klik untuk mengaktifkan / menonaktifkan suara notifikasi pesanan masuk">
+          <i class="fa-solid fa-bell" id="adminSoundIcon"></i>
+          <span id="adminSoundLabel">Suara: Aktif</span>
+        </button>
+        <button type="button" class="admin-btn-action" onclick="testAdminSound()" style="padding: 6px 10px; font-size: 12px; background: #f1f5f9;" title="Tes Suara Notifikasi">
+          <i class="fa-solid fa-volume-high"></i> Tes
+        </button>
+
         <button type="button" class="admin-btn-action" onclick="openDatabaseModal()" id="dbStatusBtn" style="padding: 6px 12px; font-size: 12.5px;" title="Kelola Koneksi Supabase Database">
           <i class="fa-solid fa-cloud"></i>
           <span>Database Cloud</span>
@@ -224,10 +233,10 @@
         <div class="admin-table-filters">
           <div class="admin-filter-tabs">
             <button class="admin-filter-btn active" data-status="semua">Semua</button>
-            <button class="admin-filter-btn" data-status="menunggu-pembayaran">Menunggu Pembayaran</button>
-            <button class="admin-filter-btn" data-status="diproses">Diproses (Jakarta HQ)</button>
+            <button class="admin-filter-btn" data-status="terkonfirmasi">Terkonfirmasi (Sudah Bayar)</button>
             <button class="admin-filter-btn" data-status="dikirim">Dikirim</button>
             <button class="admin-filter-btn" data-status="selesai">Selesai</button>
+            <button class="admin-filter-btn" data-status="dibatalkan">Dibatalkan</button>
           </div>
 
           <div class="admin-table-search">
@@ -318,44 +327,51 @@
 
             <select id="productCategoryFilter" class="admin-form-select" style="min-width: 170px;">
               <option value="">Semua Kategori</option>
-              <optgroup label="-- SEPATU &amp; FOOTWEAR --">
-                <option value="running">Running (Sepatu Lari)</option>
-                <option value="lifestyle">Sneakers &amp; Lifestyle</option>
-                <option value="basketball">Basketball (Sepatu Basket)</option>
+              <optgroup label="-- FOOTWEAR / SEPATU --">
+                <option value="running">Running</option>
+                <option value="sneakers">Lifestyle &amp; Sneakers</option>
+                <option value="basketball">Basketball</option>
                 <option value="football">Football &amp; Futsal</option>
                 <option value="training">Training &amp; Gym</option>
                 <option value="badminton">Badminton</option>
                 <option value="tennis">Tennis</option>
                 <option value="sandals">Sandals &amp; Slides</option>
+                <option value="walking">Walking</option>
+                <option value="fitness">Fitness</option>
               </optgroup>
-              <optgroup label="-- PAKAIAN &amp; APPAREL --">
+              <optgroup label="-- APPAREL / PAKAIAN --">
                 <option value="tshirt">T-Shirt &amp; Jersey</option>
-                <option value="shorts">Celana Pendek (Shorts)</option>
+                <option value="shorts">Celana Pendek</option>
                 <option value="pants">Celana Panjang &amp; Jogger</option>
                 <option value="sports-bra">Sports Bra</option>
                 <option value="jacket">Jaket &amp; Hoodie</option>
                 <option value="tanktop">Tank Top &amp; Singlet</option>
-                <option value="swimwear">Pakaian Renang</option>
+                <option value="swimming">Swimwear &amp; Renang</option>
               </optgroup>
               <optgroup label="-- AKSESORIS &amp; EQUIPMENT --">
-                <option value="bags">Tas &amp; Ransel (Bags)</option>
+                <option value="bags">Tas &amp; Ransel</option>
                 <option value="caps">Topi &amp; Headwear</option>
-                <option value="socks">Kaos Kaki (Socks)</option>
-                <option value="bottles">Botol Minum (Bottles)</option>
-                <option value="equipment">Perlengkapan &amp; Deker</option>
+                <option value="socks">Kaos Kaki</option>
+                <option value="bottles">Botol Minum</option>
+                <option value="equipment">Perlengkapan Olahraga &amp; Deker</option>
               </optgroup>
             </select>
 
-            <select id="productBrandFilter" class="admin-form-select" style="min-width: 140px;">
+            <select id="productBrandFilter" class="admin-form-select" style="min-width: 150px;">
               <option value="">Semua Brand</option>
+              <option value="asics">Asics</option>
               <option value="nike">Nike</option>
+              <option value="diadora">Diadora</option>
+              <option value="adidas">Adidas</option>
+              <option value="astec">Astec</option>
+              <option value="reebok">Reebok</option>
               <option value="puma">Puma</option>
               <option value="skechers">Skechers</option>
-              <option value="adidas">Adidas</option>
-              <option value="diadora">Diadora</option>
-              <option value="reebok">Reebok</option>
               <option value="converse">Converse</option>
-              <option value="asics">Asics</option>
+              <option value="airwalk">Airwalk</option>
+              <option value="spalding">Spalding</option>
+              <option value="prince">Prince</option>
+              <option value="speedo">Speedo</option>
             </select>
 
             <select id="productStockFilter" class="admin-form-select" style="min-width: 140px;">
@@ -439,8 +455,42 @@
         </div>
       </div>
 
-      <div class="admin-modal-footer">
+      <div class="admin-modal-footer" id="modalDetailFooterActions" style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="admin-btn-action" id="modalDetailInvoiceBtn">
+          <i class="fa-solid fa-file-invoice"></i> Lihat &amp; Cetak Invoice
+        </button>
+        <button type="button" class="admin-btn-handover" id="modalDetailHandoverBtn" style="display: none;">
+          <i class="fa-solid fa-truck-fast"></i> Kirim Langsung
+        </button>
         <button type="button" class="admin-btn-action" id="adminModalCloseBtn">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= OFFICIAL INVOICE VIEWER MODAL ================= -->
+  <div class="admin-modal-backdrop" id="adminInvoiceModal" style="display: none;">
+    <div class="admin-modal-card" style="max-width: 780px; padding: 0; background: #ffffff; overflow: hidden;">
+      <div class="admin-modal-header" style="background: #0f172a; color: #ffffff; padding: 14px 20px;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; color: #ffffff;">
+          <i class="fa-solid fa-receipt" style="color: #f95a00;"></i>
+          <span>Official Invoice &amp; Faktur Penjualan</span>
+        </h3>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="admin-btn-action" onclick="printCurrentInvoice()" style="background: #f95a00; color: #ffffff; border: none; padding: 6px 14px; font-size: 12.5px; border-radius: 6px; font-weight: 600;">
+            <i class="fa-solid fa-print"></i> Cetak / Print
+          </button>
+          <button type="button" class="admin-btn-action" onclick="downloadCurrentInvoice()" style="background: #2563eb; color: #ffffff; border: none; padding: 6px 14px; font-size: 12.5px; border-radius: 6px; font-weight: 600;">
+            <i class="fa-solid fa-download"></i> Download Invoice
+          </button>
+          <button type="button" onclick="closeInvoiceModal()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; margin-left: 8px;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Invoice Area -->
+      <div class="admin-modal-body invoice-printable-area" id="invoiceModalContent" style="padding: 28px 32px; max-height: 75vh; overflow-y: auto;">
+        <!-- Populated dynamically by admin.js -->
       </div>
     </div>
   </div>
@@ -473,16 +523,19 @@
             <div class="admin-form-group">
               <label class="admin-form-label" for="prodBrandInput">Brand / Merek <span style="color:#ef4444;">*</span></label>
               <select id="prodBrandInput" class="admin-form-select" required>
+                <option value="asics">Asics</option>
                 <option value="nike">Nike</option>
+                <option value="diadora">Diadora</option>
+                <option value="adidas">Adidas</option>
+                <option value="astec">Astec</option>
+                <option value="reebok">Reebok</option>
                 <option value="puma">Puma</option>
                 <option value="skechers">Skechers</option>
-                <option value="adidas">Adidas</option>
-                <option value="diadora">Diadora</option>
-                <option value="reebok">Reebok</option>
                 <option value="converse">Converse</option>
-                <option value="asics">Asics</option>
-                <option value="astec">Astec</option>
                 <option value="airwalk">Airwalk</option>
+                <option value="spalding">Spalding</option>
+                <option value="prince">Prince</option>
+                <option value="speedo">Speedo</option>
               </select>
             </div>
 
@@ -490,31 +543,33 @@
             <div class="admin-form-group">
               <label class="admin-form-label" for="prodCategoryInput">Kategori Produk <span style="color:#ef4444;">*</span></label>
               <select id="prodCategoryInput" class="admin-form-select" required onchange="handleCategoryChangeForSizes(this.value)">
-                <optgroup label="-- SEPATU &amp; FOOTWEAR --">
-                  <option value="running">Running (Sepatu Lari)</option>
-                  <option value="lifestyle">Sneakers &amp; Lifestyle</option>
-                  <option value="basketball">Basketball (Sepatu Basket)</option>
+                <optgroup label="-- FOOTWEAR / SEPATU --">
+                  <option value="running">Running</option>
+                  <option value="sneakers">Lifestyle &amp; Sneakers</option>
+                  <option value="basketball">Basketball</option>
                   <option value="football">Football &amp; Futsal</option>
                   <option value="training">Training &amp; Gym</option>
                   <option value="badminton">Badminton</option>
                   <option value="tennis">Tennis</option>
                   <option value="sandals">Sandals &amp; Slides</option>
+                  <option value="walking">Walking</option>
+                  <option value="fitness">Fitness</option>
                 </optgroup>
-                <optgroup label="-- PAKAIAN &amp; APPAREL --">
+                <optgroup label="-- APPAREL / PAKAIAN --">
                   <option value="tshirt">T-Shirt &amp; Jersey</option>
-                  <option value="shorts">Celana Pendek (Shorts)</option>
+                  <option value="shorts">Celana Pendek</option>
                   <option value="pants">Celana Panjang &amp; Jogger</option>
                   <option value="sports-bra">Sports Bra</option>
                   <option value="jacket">Jaket &amp; Hoodie</option>
                   <option value="tanktop">Tank Top &amp; Singlet</option>
-                  <option value="swimwear">Pakaian Renang</option>
+                  <option value="swimming">Swimwear &amp; Renang</option>
                 </optgroup>
                 <optgroup label="-- AKSESORIS &amp; EQUIPMENT --">
-                  <option value="bags">Tas &amp; Ransel (Bags)</option>
+                  <option value="bags">Tas &amp; Ransel</option>
                   <option value="caps">Topi &amp; Headwear</option>
-                  <option value="socks">Kaos Kaki (Socks)</option>
-                  <option value="bottles">Botol Minum (Bottles)</option>
-                  <option value="equipment">Perlengkapan &amp; Deker</option>
+                  <option value="socks">Kaos Kaki</option>
+                  <option value="bottles">Botol Minum</option>
+                  <option value="equipment">Perlengkapan Olahraga &amp; Deker</option>
                 </optgroup>
               </select>
             </div>
@@ -565,13 +620,60 @@
               </div>
             </div>
 
-            <!-- Image URL -->
+            <!-- Image Source Section (Upload File or Link URL) -->
             <div class="admin-form-group full-width">
-              <label class="admin-form-label" for="prodImageInput">URL / Path Foto Produk <span style="color:#ef4444;">*</span></label>
-              <input type="text" id="prodImageInput" class="admin-form-input" placeholder="Contoh: Asset/Sepatu/Nike/... atau URL gambar" required>
-              <div class="image-preview-wrap">
-                <img id="prodImagePreview" src="Asset/Logo/logo.png" alt="Preview" class="image-preview-thumb">
-                <span style="font-size: 11.5px; color: #64748b;">Preview foto produk yang akan ditampilkan kepada pembeli.</span>
+              <label class="admin-form-label">
+                <i class="fa-solid fa-image" style="color: #2563eb; margin-right: 4px;"></i>
+                Foto Produk <span style="color:#ef4444;">*</span>
+              </label>
+
+              <!-- Image Input Mode Tabs -->
+              <div class="image-mode-tabs">
+                <button type="button" class="image-mode-btn active" id="btnModeFile" onclick="switchImageInputMode('file')">
+                  <i class="fa-solid fa-folder-open"></i> Dari File Manager / Komputer
+                </button>
+                <button type="button" class="image-mode-btn" id="btnModeUrl" onclick="switchImageInputMode('url')">
+                  <i class="fa-solid fa-link"></i> Dari Tautan / Link URL
+                </button>
+              </div>
+
+              <!-- Option 1: File Manager Upload Box -->
+              <div id="imageFileDropzone" class="image-dropzone" onclick="document.getElementById('prodImageFileInput').value=''; document.getElementById('prodImageFileInput').click()">
+                <input type="file" id="prodImageFileInput" accept="image/*,.avif,.webp,.png,.jpg,.jpeg,.jfif" style="display: none;" onclick="event.stopPropagation()" onchange="handleProductFileSelected(event)">
+                <div class="dropzone-inner">
+                  <i class="fa-solid fa-cloud-arrow-up" style="font-size: 28px; color: #3b82f6; margin-bottom: 6px;"></i>
+                  <div style="font-weight: 600; font-size: 13px; color: #0f172a;">Klik untuk Buka File Manager atau Seret Gambar ke Sini</div>
+                  <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">Mendukung PNG, JPG, JPEG, WEBP, AVIF</div>
+                </div>
+              </div>
+
+              <!-- Option 2: URL / Path Input Box -->
+              <div id="imageUrlBox" style="display: none;">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input type="text" id="prodImageInput" class="admin-form-input" style="flex: 1;" placeholder="Paste link gambar di sini... (https://example.com/gambar.jpg)">
+                  <button type="button" class="admin-btn-action" style="padding: 8px 14px; font-size: 12px; white-space: nowrap; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer;" onclick="navigator.clipboard.readText().then(t => { const inp = document.getElementById('prodImageInput'); if(inp && t) { inp.value = t.trim(); inp.dispatchEvent(new Event('input')); } }).catch(() => alert('Izinkan akses clipboard di browser.'))">
+                    <i class="fa-solid fa-paste"></i> Tempel
+                  </button>
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+                  💡 Tip: Paste link gambar dari web. Preview otomatis muncul di bawah.
+                </div>
+              </div>
+
+              <!-- Live Preview Card -->
+              <div class="image-preview-card" id="imagePreviewCard" style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-top: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+                  <img id="prodImagePreview" src="Asset/Logo/logo.png" alt="Preview" class="image-preview-thumb" onerror="this.src='Asset/Logo/logo.png'" referrerpolicy="no-referrer">
+                  <div style="min-width: 0;">
+                    <div id="imagePreviewName" style="font-weight: 600; font-size: 13px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px;">Asset/Logo/logo.png</div>
+                    <div id="imagePreviewSourceBadge" style="margin-top: 2px;">
+                      <span id="imageSourceLabel" style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 1px 8px; border-radius: 10px; font-weight: 600; font-size: 10.5px;">Link Standar</span>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="admin-btn-action" style="padding: 5px 10px; font-size: 12px; color: #ef4444; border-color: #fecaca; background: #fff;" onclick="resetProductImage()" title="Reset Foto">
+                  <i class="fa-solid fa-rotate-left"></i> Ganti
+                </button>
               </div>
             </div>
 
@@ -633,6 +735,9 @@
         </div>
 
         <div class="admin-modal-footer">
+          <button type="button" class="admin-btn-danger" id="productModalDeleteBtn" style="display: none; margin-right: auto; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 9px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-trash-can"></i> Hapus Produk
+          </button>
           <button type="button" class="admin-btn-action" id="productModalCancelBtn">Batal</button>
           <button type="submit" class="admin-btn-primary" id="saveProductSubmitBtn">
             <i class="fa-solid fa-floppy-disk"></i> Simpan Produk

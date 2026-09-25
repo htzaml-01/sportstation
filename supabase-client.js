@@ -9,9 +9,17 @@
 // ============================================================================
 // 1. KONFIGURASI SUPABASE (Isi URL & Anon Key dari Dashboard Supabase kamu)
 // ============================================================================
+const DEFAULT_SUPABASE_URL = 'https://herktkegxggpdbfzwsem.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhlcmt0a2VneGdncGRiZnp3c2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzQxOTYsImV4cCI6MjEwNTgxMDE5Nn0.WUUUmQVdvIOd06aBcBFIso9h7F2buWmKmXOPskqypYk';
+
+const _savedKey = localStorage.getItem('SUPABASE_ANON_KEY');
+if (_savedKey && _savedKey.includes('1774356302')) {
+  localStorage.removeItem('SUPABASE_ANON_KEY');
+}
+
 window.SUPABASE_CONFIG = window.SUPABASE_CONFIG || {
-  url: localStorage.getItem('SUPABASE_URL') || 'https://herktkegxggpdbfzwsem.supabase.co',
-  anonKey: localStorage.getItem('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhlcmt0a2VneGdncGRiZnp3c2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzQxOTYsImV4cCI6MjEwNTgxMDE5Nn0.WUUUmQVdvIOd06aBcBFIso9h7F2buWmKmXOPskqypYk'
+  url: localStorage.getItem('SUPABASE_URL') || DEFAULT_SUPABASE_URL,
+  anonKey: localStorage.getItem('SUPABASE_ANON_KEY') || DEFAULT_SUPABASE_KEY
 };
 
 let _supabaseInstance = null;
@@ -134,6 +142,12 @@ function mapOrderFromDB(row) {
  */
 async function fetchProductsFromDB() {
   const sb = getSupabaseClient();
+  let deletedIds = [];
+  try {
+    const rawDel = localStorage.getItem('SportsStationDeletedProducts');
+    if (rawDel) deletedIds = JSON.parse(rawDel);
+  } catch (e) {}
+
   if (sb) {
     try {
       const { data, error } = await sb
@@ -143,7 +157,11 @@ async function fetchProductsFromDB() {
 
       if (error) throw error;
       if (data && data.length > 0) {
-        const mapped = data.map(mapProductFromDB);
+        let mapped = data.map(mapProductFromDB);
+        // Exclude produk yang ada di blacklist deleted lokal
+        if (deletedIds.length > 0) {
+          mapped = mapped.filter(p => !deletedIds.includes(String(p.id)));
+        }
         // Cache ke localStorage agar offline tetap instan
         localStorage.setItem('SportsStationCatalog', JSON.stringify(mapped));
         return mapped;
@@ -156,7 +174,11 @@ async function fetchProductsFromDB() {
   // Fallback: localStorage
   try {
     const raw = localStorage.getItem('SportsStationCatalog');
-    return raw ? JSON.parse(raw) : [];
+    let list = raw ? JSON.parse(raw) : [];
+    if (deletedIds.length > 0) {
+      list = list.filter(p => !deletedIds.includes(String(p.id)));
+    }
+    return list;
   } catch (e) {
     return [];
   }
@@ -166,12 +188,21 @@ async function fetchProductsFromDB() {
  * Menyimpan / memperbarui produk ke Supabase & localStorage
  */
 async function upsertProductToDB(product) {
+  // Jika produk ini sebelumnya ada di daftar deleted, hapus dari blacklist deleted
+  try {
+    const rawDel = localStorage.getItem('SportsStationDeletedProducts');
+    if (rawDel) {
+      const deletedIds = JSON.parse(rawDel).filter(id => id !== String(product.id));
+      localStorage.setItem('SportsStationDeletedProducts', JSON.stringify(deletedIds));
+    }
+  } catch (e) {}
+
   // Simpan ke local cache dulu
   let localList = [];
   try {
     const raw = localStorage.getItem('SportsStationCatalog');
     localList = raw ? JSON.parse(raw) : [];
-    const idx = localList.findIndex(p => p.id === product.id);
+    const idx = localList.findIndex(p => String(p.id) === String(product.id));
     if (idx !== -1) {
       localList[idx] = { ...product };
     } else {
@@ -200,11 +231,23 @@ async function upsertProductToDB(product) {
  * Menghapus produk dari Supabase & localStorage
  */
 async function deleteProductFromDB(productId) {
+  const strId = String(productId);
+
+  // Simpan ke blacklist deleted IDs
+  try {
+    const rawDel = localStorage.getItem('SportsStationDeletedProducts');
+    const deletedIds = rawDel ? JSON.parse(rawDel) : [];
+    if (!deletedIds.includes(strId)) {
+      deletedIds.push(strId);
+      localStorage.setItem('SportsStationDeletedProducts', JSON.stringify(deletedIds));
+    }
+  } catch (e) {}
+
   // Hapus dari local cache
   try {
     const raw = localStorage.getItem('SportsStationCatalog');
     if (raw) {
-      const list = JSON.parse(raw).filter(p => p.id !== productId);
+      const list = JSON.parse(raw).filter(p => String(p.id) !== strId);
       localStorage.setItem('SportsStationCatalog', JSON.stringify(list));
     }
   } catch (e) {
@@ -215,9 +258,9 @@ async function deleteProductFromDB(productId) {
   const sb = getSupabaseClient();
   if (sb) {
     try {
-      const { error } = await sb.from('products').delete().eq('id', productId);
+      const { error } = await sb.from('products').delete().eq('id', strId);
       if (error) throw error;
-      console.log('✅ Produk terhapus dari Supabase:', productId);
+      console.log('✅ Produk terhapus dari Supabase:', strId);
     } catch (err) {
       console.warn('⚠️ Gagal hapus produk dari Supabase:', err.message);
     }

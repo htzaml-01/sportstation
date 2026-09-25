@@ -227,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initThumbnails();
   initHeaderAndScrollTop();
   initMegaDropdowns();
+  initMobileDrawer();
 
   if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
     window.SportsStationDB.fetchProducts().then(() => {
@@ -244,20 +245,23 @@ function initProductData() {
 
   let catalog = PRODUCTS;
   try {
+    const rawDel = localStorage.getItem('SportsStationDeletedProducts');
+    const deletedIds = rawDel ? JSON.parse(rawDel) : [];
+
     const raw = localStorage.getItem('SportsStationCatalog');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        catalog = parsed;
+        catalog = parsed.filter(p => !deletedIds.includes(String(p.id)));
       }
     }
   } catch (e) {
     console.warn('Failed to parse catalog from localStorage', e);
   }
 
-  let product = catalog.find(p => p.id === prodId);
+  let product = catalog.find(p => String(p.id) === String(prodId));
   if (!product) {
-    product = PRODUCTS.find(p => p.id === prodId) || catalog[0] || PRODUCTS[0];
+    product = PRODUCTS.find(p => String(p.id) === String(prodId)) || catalog[0] || PRODUCTS[0];
   }
   window.currentLoadedProduct = product;
 
@@ -271,20 +275,26 @@ function initProductData() {
   // Main Image
   const mainImg = document.getElementById('pdpMainImg');
   if (mainImg) {
+    mainImg.referrerPolicy = 'no-referrer';
     mainImg.src = product.image;
     mainImg.alt = product.name;
+    mainImg.onerror = function() { this.src = 'Asset/Logo/logo.png'; };
   }
 
   // Thumbnail image
   const thumbImg = document.getElementById('pdpThumbImg');
   if (thumbImg) {
+    thumbImg.referrerPolicy = 'no-referrer';
     thumbImg.src = product.image;
     thumbImg.alt = product.name;
+    thumbImg.onerror = function() { this.src = 'Asset/Logo/logo.png'; };
   }
   const thumbList = document.querySelectorAll('.pdp-thumb img');
   thumbList.forEach(thumb => {
+    thumb.referrerPolicy = 'no-referrer';
     thumb.src = product.image;
     thumb.alt = product.name;
+    thumb.onerror = function() { this.src = 'Asset/Logo/logo.png'; };
   });
 
   // Product Brand
@@ -544,43 +554,47 @@ function renderRelatedProducts(currentProd) {
 // ============================================================================
 // 8. UTILITIES (TOAST, HEADER, DROPDOWNS)
 // ============================================================================
-function showToast(message) {
+function showToast(message, type = 'success') {
+  if (window.SportsStationAuth && typeof window.SportsStationAuth.showToast === 'function') {
+    window.SportsStationAuth.showToast(message, type);
+    return;
+  }
   let toast = document.querySelector('.sports-toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.className = 'sports-toast';
     document.body.appendChild(toast);
-
-    Object.assign(toast.style, {
-      position: 'fixed',
-      bottom: '150px',
-      right: '24px',
-      backgroundColor: '#1f2937',
-      color: '#ffffff',
-      padding: '12px 20px',
-      borderRadius: '8px',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-      fontSize: '13px',
-      fontWeight: '600',
-      zIndex: '10000',
-      opacity: '0',
-      transform: 'translateY(10px)',
-      transition: 'all 0.3s ease',
-      pointerEvents: 'none',
-      borderLeft: '4px solid #f26522',
-      maxWidth: '360px'
-    });
   }
 
-  toast.textContent = message;
-  toast.style.opacity = '1';
-  toast.style.transform = 'translateY(0)';
+  let cleanMsg = String(message || '').replace(/^[✅🎉⚠️❌ℹ️🏷️✨\s]+/, '').trim();
+  if (!cleanMsg) cleanMsg = 'Success';
+
+  let iconClass = 'fa-solid fa-circle-check';
+  let iconColor = '#22c55e';
+  toast.className = 'sports-toast';
+
+  const lower = String(message || '').toLowerCase();
+  if (type === 'error' || lower.includes('gagal') || lower.includes('habis') || lower.includes('batal') || lower.includes('belum')) {
+    iconClass = 'fa-solid fa-circle-xmark';
+    iconColor = '#ef4444';
+    toast.classList.add('toast-error');
+  } else if (type === 'warning' || lower.includes('peringatan') || lower.includes('harap') || lower.includes('wajib')) {
+    iconClass = 'fa-solid fa-triangle-exclamation';
+    iconColor = '#f59e0b';
+    toast.classList.add('toast-warning');
+  }
+
+  toast.innerHTML = `
+    <i class="${iconClass} sports-toast-icon" style="color: ${iconColor};"></i>
+    <span class="sports-toast-text">${cleanMsg}</span>
+  `;
+
+  toast.classList.add('show');
 
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
-  }, 3200);
+    toast.classList.remove('show');
+  }, 2800);
 }
 
 function initHeaderAndScrollTop() {
@@ -627,4 +641,103 @@ function initMegaDropdowns() {
       }, 120);
     });
   });
+}
+
+function initMobileDrawer() {
+  const mobileToggle = document.getElementById('mobileToggle');
+  const mobileDrawer = document.getElementById('mobileDrawer');
+  const drawerClose = document.getElementById('drawerClose');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+
+  if (!mobileDrawer) return;
+
+  function openDrawer() {
+    mobileDrawer.classList.add('open');
+    if (drawerOverlay) drawerOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    mobileDrawer.classList.remove('open');
+    document.querySelectorAll('.drawer-subview').forEach(s => s.classList.remove('active'));
+    if (drawerOverlay) drawerOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  }
+
+  if (drawerClose) {
+    drawerClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
+  }
+
+  if (drawerOverlay) {
+    drawerOverlay.addEventListener('click', closeDrawer);
+  }
+
+  // Subview open buttons (BRANDS, SPORTS, MEN, WOMEN, KIDS, EQUIPMENT)
+  document.querySelectorAll('.drawer-link-btn[data-subview]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-subview') || btn.dataset.subview;
+      if (targetId) {
+        const subview = document.getElementById(targetId);
+        if (subview) {
+          subview.classList.add('active');
+        }
+      }
+    });
+  });
+
+  // Subview back buttons
+  document.querySelectorAll('.drawer-back-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const subview = btn.closest('.drawer-subview');
+      if (subview) {
+        subview.classList.remove('active');
+      }
+    });
+  });
+
+  // Close buttons inside subviews
+  document.querySelectorAll('.drawer-sub-close').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDrawer();
+    });
+  });
+
+  // Accordion toggle behavior for A-B, C-E, F-K, FOOTWEAR, CLOTHING, etc.
+  document.querySelectorAll('.brand-acc-header, .drawer-acc-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const group = header.closest('.brand-acc-group, .drawer-acc-group');
+      if (group) {
+        group.classList.toggle('active');
+      }
+    });
+  });
+
+  const drawerLinks = document.querySelectorAll('.drawer-links a, .brand-item-link, .drawer-sub-link');
+  drawerLinks.forEach((link) => {
+    link.addEventListener('click', closeDrawer);
+  });
+
+  window.openMobileBrandDrawer = function() {
+    openDrawer();
+    const brandsSubview = document.getElementById('drawerSubBrands');
+    if (brandsSubview) brandsSubview.classList.add('active');
+  };
 }

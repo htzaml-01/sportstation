@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesanan Saya | Sports Station</title>
-  <meta name="description" content="Riwayat dan status pesanan produk olahraga Anda di Sports Station resmi.">
+  <title>Profil &amp; Akun Saya | Sports Station</title>
+  <meta name="description" content="Kelola informasi profil, data pengiriman, dan akun member Sports Station Anda.">
 
   <!-- Google Fonts: Montserrat & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +18,136 @@
   <link rel="stylesheet" href="styles.css?v=6">
   <link rel="stylesheet" href="auth.css?v=3">
   <link rel="stylesheet" href="orders.css?v=1">
+
+  <style>
+    .profile-page-main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 30px 20px 80px;
+      min-height: calc(100vh - 280px);
+    }
+
+    .profile-page-header {
+      margin-bottom: 24px;
+    }
+
+    .profile-page-header h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 6px;
+    }
+
+    .profile-page-header p {
+      color: #64748b;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .profile-main-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      padding: 28px;
+    }
+
+    .profile-hero-banner {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 24px;
+      border-radius: 10px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-hero-banner::after {
+      content: '';
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(249, 90, 0, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .profile-hero-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f95a00, #ea580c);
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(249, 90, 0, 0.4);
+    }
+
+    .profile-hero-details h2 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .profile-hero-details p {
+      margin: 0 0 10px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .profile-badges-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .profile-badge-pill {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f1f5f9;
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .profile-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .profile-form-grid .full-span {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 640px) {
+      .profile-form-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-form-grid .full-span {
+        grid-column: span 1;
+      }
+      .profile-hero-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+      }
+    }
+  </style>
 </head>
 <body class="orders-page-body">
 
@@ -41,12 +171,10 @@
   <!-- MAIN NAVIGATION HEADER -->
   <header class="main-header" id="mainHeader">
     <div class="header-container">
-      <!-- Logo Sports Station -->
       <a href="index.html" class="brand-logo" id="logoLink">
         <img src="Asset/Logo/logo.png" alt="Sports Station Logo" class="logo-img">
       </a>
 
-      <!-- Navigation Links -->
       <nav class="nav-menu" id="navMenu">
         <ul class="nav-list">
           <li class="nav-item"><a href="shop.html" class="nav-link">BRANDS</a></li>
@@ -59,23 +187,12 @@
         </ul>
       </nav>
 
-      <!-- Right Header Actions (Search, Auth Slot, Cart) -->
       <div class="header-actions">
-        <!-- Search Bar -->
-        <div class="search-box">
-          <i class="fa-solid fa-magnifying-glass search-icon"></i>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search" autocomplete="off">
-        </div>
-
-        <!-- Auth Slot (Login / Profile rendered dynamically) -->
         <div class="header-auth-slot" id="headerAuthSlot"></div>
-
-        <!-- Cart Icon -->
         <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Shopping Cart">
           <i class="fa-solid fa-cart-shopping"></i>
           <span class="cart-badge" id="cartCount">0</span>
         </a>
-
         <!-- Mobile Menu Toggle -->
         <button class="mobile-toggle" id="mobileToggle" aria-label="Open Navigation Menu">
           <i class="fa-solid fa-bars"></i>
@@ -423,123 +540,143 @@
   </div>
   <div class="drawer-overlay" id="drawerOverlay"></div>
 
-  <!-- MAIN PESANAN SAYA VIEW -->
-  <main class="orders-main">
+  <!-- MAIN CONTENT -->
+  <main class="profile-page-main">
     <!-- Breadcrumb -->
     <nav class="orders-breadcrumb" aria-label="Breadcrumb">
       <a href="index.html">Beranda</a>
       <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
-      <a href="index.html">Akun</a>
+      <span>Akun</span>
       <i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>
-      <span>Pesanan Saya</span>
+      <span>Profil Saya</span>
     </nav>
 
-    <!-- Page Header & Search -->
-    <div class="orders-page-header">
-      <div class="orders-title-box">
-        <h1>Pesanan Saya</h1>
-        <p>Pantau status transaksi, rincian pembayaran, dan pelacakan pengiriman paket Anda.</p>
-      </div>
-
-      <div class="orders-search-box">
-        <i class="fa-solid fa-magnifying-glass orders-search-icon"></i>
-        <input type="text" id="ordersSearchInput" class="orders-search-input" placeholder="Cari No. Pesanan atau Nama Produk...">
-      </div>
+    <div class="profile-page-header">
+      <h1>Profil &amp; Akun Saya</h1>
+      <p>Kelola data akun, informasi kontak, dan alamat utama untuk kenyamanan belanja Anda di Sports Station.</p>
     </div>
 
-    <!-- Status Tabs -->
-    <div class="orders-tabs-wrapper">
-      <ul class="orders-tabs-nav" role="tablist">
-        <li>
-          <button class="orders-tab-btn active" data-tab="semua">
-            Semua <span class="orders-tab-badge" id="count-semua">0</span>
-          </button>
-        </li>
-        <li>
-          <button class="orders-tab-btn" data-tab="terkonfirmasi">
-            Terkonfirmasi (Sudah Bayar) <span class="orders-tab-badge" id="count-terkonfirmasi">0</span>
-          </button>
-        </li>
-        <li>
-          <button class="orders-tab-btn" data-tab="dikirim">
-            Dikirim <span class="orders-tab-badge" id="count-dikirim">0</span>
-          </button>
-        </li>
-        <li>
-          <button class="orders-tab-btn" data-tab="selesai">
-            Selesai <span class="orders-tab-badge" id="count-selesai">0</span>
-          </button>
-        </li>
-        <li>
-          <button class="orders-tab-btn" data-tab="dibatalkan">
-            Dibatalkan <span class="orders-tab-badge" id="count-dibatalkan">0</span>
-          </button>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Orders Cards List -->
-    <div class="orders-list-container" id="ordersListContainer">
-      <!-- Populated dynamically by orders.js -->
-    </div>
-
-    <!-- Empty State -->
-    <div class="orders-empty-state" id="ordersEmptyState" style="display: none;">
-      <div class="orders-empty-icon">
-        <i class="fa-solid fa-bag-shopping"></i>
+    <div class="profile-main-card">
+      <!-- Hero Banner -->
+      <div class="profile-hero-banner">
+        <div class="profile-hero-avatar" id="pageHeroAvatar">U</div>
+        <div class="profile-hero-details">
+          <h2 id="pageHeroName">Nama Pengguna</h2>
+          <p id="pageHeroEmail">email@sportsstation.id</p>
+          <div class="profile-badges-row">
+            <span class="profile-badge-pill" id="pageHeroMemberId"><i class="fa-solid fa-id-badge"></i> SS-MEMBER-01</span>
+            <span class="profile-badge-pill" id="pageHeroRole" style="background: rgba(3, 105, 161, 0.3);"><i class="fa-solid fa-shield-halved"></i> Member</span>
+            <span class="profile-badge-pill" id="pageHeroPoints" style="background: rgba(245, 158, 11, 0.3);"><i class="fa-solid fa-coins" style="color: #fbbf24;"></i> 100 Poin</span>
+          </div>
+        </div>
       </div>
-      <h2 class="orders-empty-title">Belum Ada Pesanan</h2>
-      <p class="orders-empty-desc">Anda belum memiliki riwayat pesanan pada kategori ini. Jelajahi katalog koleksi sepatu dan apparel terbaru kami.</p>
-      <a href="shop.html" class="order-btn-primary" style="padding: 10px 24px; font-size: 13.5px;">Mulai Belanja</a>
+
+      <!-- Form Edit Profile -->
+      <form id="profilePageForm" onsubmit="handlePageProfileSubmit(event)">
+        <div class="profile-form-grid">
+          <div class="profile-form-group">
+            <label class="profile-form-label" for="pageInputName">Nama Lengkap</label>
+            <input type="text" id="pageInputName" class="profile-form-input" required placeholder="Nama Lengkap Anda">
+          </div>
+
+          <div class="profile-form-group">
+            <label class="profile-form-label" for="pageInputEmail">Alamat Email (Identitas Login)</label>
+            <input type="email" id="pageInputEmail" class="profile-form-input" readonly disabled style="background:#f8fafc; color:#64748b; cursor:not-allowed;">
+          </div>
+
+          <div class="profile-form-group full-span">
+            <label class="profile-form-label" for="pageInputPhone">Nomor WhatsApp / Handphone</label>
+            <input type="tel" id="pageInputPhone" class="profile-form-input" placeholder="Contoh: 081234567890">
+          </div>
+
+          <div class="profile-form-group full-span">
+            <label class="profile-form-label" for="pageInputAddress">Alamat Pengiriman Utama</label>
+            <textarea id="pageInputAddress" class="profile-form-input" rows="3" placeholder="Masukkan alamat lengkap rumah / kantor untuk pengiriman pesanan..."></textarea>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; pt-2; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+          <button type="submit" class="profile-btn-save" style="width: auto; padding: 11px 24px;">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+          </button>
+          <a href="orders.html" class="order-btn-outline" style="text-decoration: none;">
+            <i class="fa-solid fa-bag-shopping"></i> Riwayat Pesanan Saya
+          </a>
+        </div>
+      </form>
     </div>
   </main>
 
-  <!-- TRACKING MODAL -->
-  <div class="tracking-modal-backdrop" id="trackingModal">
-    <div class="tracking-modal-card">
-      <div class="tracking-modal-header">
-        <h3 class="tracking-modal-title">
-          <i class="fa-solid fa-route" style="color: #f95a00;"></i>
-          Lacak Pengiriman Paket
-        </h3>
-        <button class="tracking-close-btn" id="trackingModalClose" aria-label="Tutup">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="tracking-modal-body">
-        <div class="tracking-summary-box">
-          <div>
-            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">No. Pesanan:</div>
-            <strong id="trackOrderId">SS-ORD-749201</strong>
-          </div>
-          <div>
-            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">Kurir Ekspedisi:</div>
-            <strong id="trackCourier">JNE Reguler</strong>
-          </div>
-          <div style="grid-column: span 2; padding-top: 6px; border-top: 1px dashed #e2e8f0;">
-            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">Nomor Resi:</div>
-            <strong id="trackResi" style="font-family: monospace; color: #f95a00; font-size: 14px;">BITE-JNE-98217301</strong>
-          </div>
-          <div style="grid-column: span 2;">
-            <div style="color: #64748b; font-size: 11.5px; margin-bottom: 2px;">Alamat Tujuan:</div>
-            <span id="trackDest" style="font-size: 12px; color: #334155;">Plumbungan, Sukodono, Sidoarjo</span>
-          </div>
-        </div>
-
-        <!-- Timeline -->
-        <div class="tracking-timeline" id="trackingTimelineContainer">
-          <!-- Dynamically populated based on live order status -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Shared Services & Controller Script -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js"></script>
-  <script src="cart-service.js"></script>
   <script src="auth.js"></script>
-  <script src="orders.js"></script>
+  <script src="cart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Populate Hero Banner
+      const initial = (user.name || 'U').charAt(0).toUpperCase();
+      document.getElementById('pageHeroAvatar').textContent = initial;
+      document.getElementById('pageHeroName').textContent = user.name || 'Member';
+      document.getElementById('pageHeroEmail').textContent = user.email || '-';
+      document.getElementById('pageHeroMemberId').innerHTML = `<i class="fa-solid fa-id-badge"></i> ${user.memberId || 'SS-MEMBER-01'}`;
+      document.getElementById('pageHeroRole').innerHTML = `<i class="fa-solid fa-shield-halved"></i> ${user.role === 'admin' ? 'Administrator' : 'Customer'}`;
+      document.getElementById('pageHeroPoints').innerHTML = `<i class="fa-solid fa-coins" style="color: #fbbf24;"></i> ${user.points || 100} Poin`;
+
+      // Populate Form
+      document.getElementById('pageInputName').value = user.name || '';
+      document.getElementById('pageInputEmail').value = user.email || '';
+      document.getElementById('pageInputPhone').value = user.phone || '';
+      document.getElementById('pageInputAddress').value = user.address || '';
+    });
+
+    function handlePageProfileSubmit(e) {
+      e.preventDefault();
+      const user = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
+      if (!user) return;
+
+      const newName = document.getElementById('pageInputName').value.trim();
+      const newPhone = document.getElementById('pageInputPhone').value.trim();
+      const newAddress = document.getElementById('pageInputAddress').value.trim();
+
+      if (!newName) {
+        alert('Nama lengkap tidak boleh kosong.');
+        return;
+      }
+
+      user.name = newName;
+      user.phone = newPhone;
+      user.address = newAddress;
+
+      localStorage.setItem('sportsstation_user', JSON.stringify(user));
+
+      // Sync registered users
+      try {
+        const raw = localStorage.getItem('sportsstation_registered_users');
+        if (raw) {
+          const list = JSON.parse(raw);
+          const match = list.find(u => (u.email || '').toLowerCase() === (user.email || '').toLowerCase());
+          if (match) {
+            match.name = newName;
+            match.phone = newPhone;
+            match.address = newAddress;
+            localStorage.setItem('sportsstation_registered_users', JSON.stringify(list));
+          }
+        }
+      } catch (err) {}
+
+      // Update hero banner
+      document.getElementById('pageHeroName').textContent = newName;
+      document.getElementById('pageHeroAvatar').textContent = newName.charAt(0).toUpperCase();
+
+      if (window.SportsStationAuth) {
+        window.SportsStationAuth.updateUI();
+        window.SportsStationAuth.showToast('✅ Profil berhasil diperbarui!');
+      }
+    }
+  </script>
 </body>
 </html>

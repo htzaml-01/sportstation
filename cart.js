@@ -169,6 +169,19 @@ function handleCheckout() {
     }
     return;
   }
+
+  // Cek apakah pengguna sudah login
+  const currentUser = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
+  if (!currentUser || !currentUser.isLoggedIn) {
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.showToast('⚠️ Anda belum login! Silakan masuk ke akun Anda terlebih dahulu untuk checkout.');
+    }
+    setTimeout(() => {
+      window.location.href = 'login.html?redirect=checkout.html';
+    }, 600);
+    return;
+  }
+
   window.location.href = 'checkout.html';
 }
 

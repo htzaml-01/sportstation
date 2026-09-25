@@ -238,6 +238,12 @@
   border-radius: 20px;
 }
 
+.order-status-badge.status-terkonfirmasi {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
 .order-status-badge.status-diproses {
   background-color: #eff6ff;
   color: #2563eb;
@@ -261,6 +267,13 @@
   color: #475569;
   border: 1px solid #e2e8f0;
 }
+
+.order-status-badge.status-dibatalkan {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
 
 /* Courier & Delivery Sub-header */
 .order-delivery-bar {
@@ -435,6 +448,48 @@
 
 .order-btn-primary:hover {
   background-color: #e04f00;
+}
+
+.order-btn-received {
+  padding: 8px 16px;
+  border: 1px solid #10b981;
+  background-color: #10b981;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-btn-received:hover {
+  background-color: #059669;
+  border-color: #059669;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.order-btn-cancel-cust {
+  padding: 8px 14px;
+  border: 1px solid #fecaca;
+  background-color: #fff1f2;
+  color: #e11d48;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.order-btn-cancel-cust:hover {
+  background-color: #ffe4e6;
+  border-color: #f43f5e;
+  color: #be123c;
 }
 
 /* Empty Orders State */

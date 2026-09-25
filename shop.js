@@ -9,6 +9,34 @@
 const DEFAULT_PRODUCTS = [
   // --- 1. NIKE ---
   {
+    id: 'nike-court-royale-2-next-nature',
+    name: "Nike Court Royale 2 Next Nature Men's Sneakers -",
+    brand: 'nike',
+    gender: 'men',
+    category: 'sneakers',
+    price: 374500,
+    originalPrice: 749000,
+    discount: 50,
+    isSale: true,
+    tag: 'SALE',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif'
+  },
+  {
+    id: 'converse-day-one-court-unisex',
+    name: "Converse Day One Court Unisex Sneakers -",
+    brand: 'converse',
+    gender: 'unisex',
+    category: 'sneakers',
+    price: 299500,
+    originalPrice: 599000,
+    discount: 50,
+    isSale: true,
+    tag: 'SALE',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Sepatu/Nike/Woman/Running/W+NIKE+AIR+ZOOM+PEGASUS+42.avif'
+  },
+  {
     id: 'nike-pegasus-plus',
     name: "Nike Pegasus Plus Men's Road Running Shoes",
     brand: 'nike',
@@ -761,34 +789,136 @@ const DEFAULT_PRODUCTS = [
     tag: 'NEW',
     createdAt: new Date().toISOString(),
     image: 'Asset/Logo/logo.png'
+  },
+  // --- 11. ASICS RUNNING ---
+  {
+    id: 'asics-gel-kayano-33',
+    name: 'ASICS GEL-KAYANO 33',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 2799000,
+    originalPrice: 2799000,
+    discount: 0,
+    stock: 44,
+    sizeStock: { '39': 6, '40': 10, '41': 12, '42': 10, '43': 4, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-gel-nimbus-28',
+    name: 'ASICS GEL-NIMBUS 28',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 2699000,
+    originalPrice: 2699000,
+    discount: 0,
+    stock: 40,
+    sizeStock: { '39': 5, '40': 8, '41': 12, '42': 10, '43': 3, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-novablast-6',
+    name: 'ASICS NOVABLAST 6',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 2199000,
+    originalPrice: 2199000,
+    discount: 0,
+    stock: 38,
+    sizeStock: { '39': 4, '40': 8, '41': 12, '42': 8, '43': 4, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-superblast-3',
+    name: 'ASICS SUPERBLAST 3',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 3299000,
+    originalPrice: 3299000,
+    discount: 0,
+    stock: 30,
+    sizeStock: { '40': 6, '41': 10, '42': 8, '43': 4, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-metaspeed-tokyo-serie',
+    name: 'ASICS METASPEED TOKYO Serie',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 3899000,
+    originalPrice: 3899000,
+    discount: 0,
+    stock: 25,
+    sizeStock: { '40': 5, '41': 8, '42': 8, '43': 3, '44': 1 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
   }
 ];
 
+function getDeletedProductIds() {
+  try {
+    const raw = localStorage.getItem('SportsStationDeletedProducts');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 // Load catalog products from localStorage (shared with Admin Panel)
 function loadMergedProducts() {
+  const deletedIds = getDeletedProductIds();
+
   let products = [];
   try {
     const raw = localStorage.getItem('SportsStationCatalog');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        products = parsed;
+        products = parsed.filter(p => !deletedIds.includes(String(p.id)));
       }
     }
   } catch (e) {}
 
   if (products.length === 0) {
-    products = [...DEFAULT_PRODUCTS];
+    products = DEFAULT_PRODUCTS.filter(dp => !deletedIds.includes(String(dp.id)));
+    try {
+      localStorage.setItem('SportsStationCatalog', JSON.stringify(products));
+    } catch (e) {}
   } else {
-    // Merge any missing authentic items from DEFAULT_PRODUCTS
+    // Merge any missing authentic items from DEFAULT_PRODUCTS (hanya yang BELUM dihapus admin)
+    let modified = false;
     DEFAULT_PRODUCTS.forEach(dp => {
-      if (!products.some(p => p.id === dp.id)) {
+      if (deletedIds.includes(String(dp.id))) return;
+      if (!products.some(p => String(p.id) === String(dp.id))) {
         products.push({ ...dp });
+        modified = true;
       }
     });
+    if (modified) {
+      try {
+        localStorage.setItem('SportsStationCatalog', JSON.stringify(products));
+      } catch (e) {}
+    }
   }
 
-  localStorage.setItem('SportsStationCatalog', JSON.stringify(products));
   return products;
 }
 
@@ -854,6 +984,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initFilterDomListeners();
   initHeaderAndScrollTop();
   initMegaDropdowns();
+  initMobileDrawer();
+  initMobileFilterDrawer();
+  initMobileSearch();
   renderProducts();
 
   if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
@@ -864,6 +997,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderProducts();
       }
     }).catch(e => console.warn('Gagal sync produk dari Supabase di shop:', e));
+  }
+});
+
+// Real-time synchronization across browser tabs when admin saves changes
+window.addEventListener('storage', (e) => {
+  if (e && e.isTrusted === false) return;
+  if (!e.key || e.key === 'SportsStationCatalog' || e.key === 'SportsStationDeletedProducts') {
+    const updated = loadMergedProducts();
+    PRODUCTS.length = 0;
+    updated.forEach(p => PRODUCTS.push(p));
+    renderProducts();
   }
 });
 
@@ -1047,6 +1191,7 @@ function renderFilterOptions() {
   const brandContainer = document.getElementById('brandOptionsList');
   if (brandContainer) {
     const brands = [
+      { id: 'asics', name: 'Asics' },
       { id: 'nike', name: 'Nike' },
       { id: 'diadora', name: 'Diadora' },
       { id: 'adidas', name: 'Adidas' },
@@ -1383,7 +1528,7 @@ function getShopBadgeHtml(prod) {
     <article class="catalog-card" data-id="${prod.id}" onclick="window.location.href='product-detail.html?id=${prod.id}'">
       ${getShopBadgeHtml(prod)}
       <a href="product-detail.html?id=${prod.id}" class="catalog-card-img-wrap">
-        <img src="${prod.image}" alt="${prod.name}" class="catalog-card-img" loading="lazy">
+        <img src="${prod.image}" alt="${prod.name}" class="catalog-card-img" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='Asset/Logo/logo.png'">
       </a>
       <div class="catalog-card-content">
         <h3 class="catalog-card-title">
@@ -1417,6 +1562,16 @@ function renderActiveTags(container, resetBtn) {
   });
   if (state.saleOnly) {
     tags.push({ type: 'sale', value: 'true', label: 'SALE' });
+  }
+
+  const mobileFilterBadge = document.getElementById('mobileFilterBadge');
+  if (mobileFilterBadge) {
+    if (tags.length > 0) {
+      mobileFilterBadge.textContent = tags.length;
+      mobileFilterBadge.style.display = 'inline-block';
+    } else {
+      mobileFilterBadge.style.display = 'none';
+    }
   }
 
   if (resetBtn && resetBtn.classList) {
@@ -1485,56 +1640,68 @@ function addToCart(productName) {
   showToast(`Ditambahkan ke keranjang: ${productName}`);
 }
 
-function showToast(message) {
+function showToast(message, type = 'success') {
+  if (window.SportsStationAuth && typeof window.SportsStationAuth.showToast === 'function') {
+    window.SportsStationAuth.showToast(message, type);
+    return;
+  }
   let toast = document.querySelector('.sports-toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.className = 'sports-toast';
     document.body.appendChild(toast);
-
-    Object.assign(toast.style, {
-      position: 'fixed',
-      bottom: '150px',
-      right: '24px',
-      backgroundColor: '#1f2937',
-      color: '#ffffff',
-      padding: '12px 20px',
-      borderRadius: '8px',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-      fontSize: '13px',
-      fontWeight: '600',
-      zIndex: '10000',
-      opacity: '0',
-      transform: 'translateY(10px)',
-      transition: 'all 0.3s ease',
-      pointerEvents: 'none',
-      borderLeft: '4px solid #f26522',
-      maxWidth: '320px'
-    });
   }
 
-  toast.textContent = message;
-  toast.style.opacity = '1';
-  toast.style.transform = 'translateY(0)';
+  let cleanMsg = String(message || '').replace(/^[✅🎉⚠️❌ℹ️🏷️✨\s]+/, '').trim();
+  if (!cleanMsg) cleanMsg = 'Success';
+
+  let iconClass = 'fa-solid fa-circle-check';
+  let iconColor = '#22c55e';
+  toast.className = 'sports-toast';
+
+  const lower = String(message || '').toLowerCase();
+  if (type === 'error' || lower.includes('gagal') || lower.includes('habis') || lower.includes('batal') || lower.includes('belum')) {
+    iconClass = 'fa-solid fa-circle-xmark';
+    iconColor = '#ef4444';
+    toast.classList.add('toast-error');
+  } else if (type === 'warning' || lower.includes('peringatan') || lower.includes('harap') || lower.includes('wajib')) {
+    iconClass = 'fa-solid fa-triangle-exclamation';
+    iconColor = '#f59e0b';
+    toast.classList.add('toast-warning');
+  }
+
+  toast.innerHTML = `
+    <i class="${iconClass} sports-toast-icon" style="color: ${iconColor};"></i>
+    <span class="sports-toast-text">${cleanMsg}</span>
+  `;
+
+  toast.classList.add('show');
 
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
-  }, 3000);
+    toast.classList.remove('show');
+  }, 2800);
 }
 
 function initHeaderAndScrollTop() {
   const scrollTopBtn = document.getElementById('scrollTopBtn');
+  let ticking = false;
+
   window.addEventListener('scroll', () => {
-    if (scrollTopBtn) {
-      if (window.scrollY > 400) {
-        scrollTopBtn.classList.add('visible');
-      } else {
-        scrollTopBtn.classList.remove('visible');
-      }
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        if (scrollTopBtn) {
+          if (window.scrollY > 400) {
+            scrollTopBtn.classList.add('visible');
+          } else {
+            scrollTopBtn.classList.remove('visible');
+          }
+        }
+        ticking = false;
+      });
+      ticking = true;
     }
-  });
+  }, { passive: true });
 
   if (scrollTopBtn) {
     scrollTopBtn.addEventListener('click', () => {
@@ -1595,4 +1762,326 @@ window.applySizeFilterDirectly = function (usSize, gender) {
   renderProducts();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
+
+/* ==========================================================================
+   MOBILE DRAWER NAVIGATION & BRANDS SUBPANEL (SHOP)
+   ========================================================================== */
+function selectShopBrandDirectly(brandId) {
+  if (!brandId) return;
+  const b = brandId.toLowerCase().trim();
+  state.selectedBrands.clear();
+  state.selectedBrands.add(b);
+
+  // Update URL without full page reload
+  try {
+    const url = new URL(window.location);
+    url.searchParams.set('brand', b);
+    window.history.pushState({}, '', url);
+  } catch (err) {
+    // Ignore URL update errors in non-standard environments
+  }
+
+  // Check the checkbox in the sidebar if available
+  document.querySelectorAll('input[name="brand"]').forEach(cb => {
+    cb.checked = (cb.value.toLowerCase() === b);
+  });
+
+  updatePageTitle();
+  renderProducts();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.selectShopBrandDirectly = selectShopBrandDirectly;
+
+function initMobileDrawer() {
+  const mobileToggle = document.getElementById('mobileToggle');
+  const mobileDrawer = document.getElementById('mobileDrawer');
+  const drawerClose = document.getElementById('drawerClose');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+
+  if (!mobileDrawer) return;
+
+  function openDrawer() {
+    mobileDrawer.classList.add('open');
+    if (drawerOverlay) drawerOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    mobileDrawer.classList.remove('open');
+    document.querySelectorAll('.drawer-subview').forEach(s => s.classList.remove('active'));
+    if (drawerOverlay) drawerOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  }
+
+  if (drawerClose) {
+    drawerClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
+  }
+
+  if (drawerOverlay) {
+    drawerOverlay.addEventListener('click', closeDrawer);
+  }
+
+  // Subview open buttons (BRANDS, SPORTS, MEN, WOMEN, KIDS, EQUIPMENT)
+  document.querySelectorAll('.drawer-link-btn[data-subview]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-subview') || btn.dataset.subview;
+      if (targetId) {
+        const subview = document.getElementById(targetId);
+        if (subview) {
+          subview.classList.add('active');
+        }
+      }
+    });
+  });
+
+  // Subview back buttons
+  document.querySelectorAll('.drawer-back-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const subview = btn.closest('.drawer-subview');
+      if (subview) {
+        subview.classList.remove('active');
+      }
+    });
+  });
+
+  // Close buttons inside subviews
+  document.querySelectorAll('.drawer-sub-close').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDrawer();
+    });
+  });
+
+  // Accordion toggle behavior for A-B, C-E, F-K, FOOTWEAR, CLOTHING, etc.
+  document.querySelectorAll('.brand-acc-header, .drawer-acc-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const group = header.closest('.brand-acc-group, .drawer-acc-group');
+      if (group) {
+        group.classList.toggle('active');
+      }
+    });
+  });
+
+  // Handle clicking on individual brand links in the drawer (in-page filter on shop.html)
+  document.querySelectorAll('.brand-item-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      try {
+        const url = new URL(link.href, window.location.origin);
+        const brandParam = url.searchParams.get('brand');
+        if (brandParam && typeof selectShopBrandDirectly === 'function') {
+          e.preventDefault();
+          selectShopBrandDirectly(brandParam);
+          closeDrawer();
+        } else {
+          closeDrawer();
+        }
+      } catch (err) {
+        closeDrawer();
+      }
+    });
+  });
+
+  // Handle clicking drawer-sub-link items (navigates via href)
+  document.querySelectorAll('.drawer-sub-link').forEach(link => {
+    link.addEventListener('click', closeDrawer);
+  });
+
+  const drawerLinks = document.querySelectorAll('.drawer-links a');
+  drawerLinks.forEach((link) => {
+    link.addEventListener('click', closeDrawer);
+  });
+
+  window.openMobileBrandDrawer = function() {
+    openDrawer();
+    const brandsSubview = document.getElementById('drawerSubBrands');
+    if (brandsSubview) brandsSubview.classList.add('active');
+  };
+}
+
+/* ==========================================================================
+   MOBILE FILTER & SORT DRAWER (MATCHING SCREENSHOT)
+   ========================================================================== */
+function initMobileFilterDrawer() {
+  const mobileFilterBtn = document.getElementById('mobileFilterBtn');
+  const filtersSidebar = document.getElementById('filtersSidebar');
+  const filtersSidebarClose = document.getElementById('filtersSidebarClose');
+  const btnMobileApply = document.getElementById('btnMobileApply');
+  const mobileClearAllBtn = document.getElementById('mobileClearAllBtn');
+  const filterBackdrop = document.getElementById('filterBackdrop');
+
+  if (!filtersSidebar) return;
+
+  function openFilterDrawer() {
+    filtersSidebar.classList.add('mobile-open');
+    if (filterBackdrop) filterBackdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeFilterDrawer() {
+    filtersSidebar.classList.remove('mobile-open');
+    if (filterBackdrop) filterBackdrop.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (mobileFilterBtn) {
+    mobileFilterBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openFilterDrawer();
+    });
+  }
+
+  if (filtersSidebarClose) {
+    filtersSidebarClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeFilterDrawer();
+    });
+  }
+
+  if (filterBackdrop) {
+    filterBackdrop.addEventListener('click', closeFilterDrawer);
+  }
+
+  if (btnMobileApply) {
+    btnMobileApply.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeFilterDrawer();
+      const grid = document.getElementById('productsGrid');
+      if (grid) {
+        const topPos = grid.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: Math.max(0, topPos), behavior: 'smooth' });
+      }
+    });
+  }
+
+  if (mobileClearAllBtn) {
+    mobileClearAllBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      resetAllFilters();
+      // Keep sort chips on relevance
+      document.querySelectorAll('.mobile-sort-chip').forEach(c => {
+        c.classList.toggle('active', c.getAttribute('data-sort') === 'relevance');
+      });
+    });
+  }
+
+  // Mobile Sort Chips click handler
+  const sortChips = document.querySelectorAll('.mobile-sort-chip');
+  sortChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      sortChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const sortVal = chip.getAttribute('data-sort');
+      state.sortBy = sortVal;
+      const sortSelect = document.getElementById('sortSelect');
+      if (sortSelect) sortSelect.value = sortVal;
+      renderProducts();
+    });
+  });
+}
+
+/* ==========================================================================
+   MOBILE EXPANDABLE SEARCH BAR
+   ========================================================================== */
+function initMobileSearch() {
+  const mobileSearchToggle = document.getElementById('mobileSearchToggle');
+  const mobileSearchDropdown = document.getElementById('mobileSearchDropdown');
+  const mobileSearchInput = document.getElementById('mobileSearchInput');
+  const mobileSearchClose = document.getElementById('mobileSearchClose');
+  const desktopSearchInput = document.getElementById('searchInput');
+
+  if (!mobileSearchToggle || !mobileSearchDropdown) return;
+
+  mobileSearchToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isOpen = mobileSearchDropdown.classList.toggle('open');
+    if (isOpen && mobileSearchInput) {
+      setTimeout(() => mobileSearchInput.focus(), 120);
+    }
+  });
+
+  if (mobileSearchClose) {
+    mobileSearchClose.addEventListener('click', () => {
+      mobileSearchDropdown.classList.remove('open');
+      if (mobileSearchInput) mobileSearchInput.value = '';
+      if (desktopSearchInput) {
+        desktopSearchInput.value = '';
+        desktopSearchInput.dispatchEvent(new Event('input'));
+      }
+      renderProducts();
+    });
+  }
+
+  if (mobileSearchInput) {
+    mobileSearchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (desktopSearchInput) {
+        desktopSearchInput.value = e.target.value;
+      }
+
+      const grid = document.getElementById('productsGrid');
+      if (!grid) return;
+
+      if (!q) {
+        renderProducts();
+        return;
+      }
+
+      const matched = PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      );
+
+      const resultsCount = document.getElementById('resultsCount');
+      if (resultsCount) resultsCount.textContent = matched.length;
+
+      if (matched.length === 0) {
+        grid.innerHTML = `
+          <div class="catalog-empty-state">
+            <i class="fa-solid fa-magnifying-glass empty-icon"></i>
+            <h3 class="empty-title">Produk tidak ditemukan</h3>
+            <p class="empty-desc">Tidak ada produk yang cocok dengan "${e.target.value}".</p>
+          </div>
+        `;
+      } else {
+        grid.innerHTML = matched.map(prod => `
+          <article class="catalog-card" data-id="${prod.id}" onclick="window.location.href='product-detail.html?id=${prod.id}'">
+            <span class="catalog-card-badge tag-sale">SALE</span>
+            <a href="product-detail.html?id=${prod.id}" class="catalog-card-img-wrap">
+              <img src="${prod.image}" alt="${prod.name}" class="catalog-card-img" loading="lazy" onerror="this.src='Asset/Logo/logo.png'">
+            </a>
+            <div class="catalog-card-content">
+              <h3 class="catalog-card-title">
+                <a href="product-detail.html?id=${prod.id}">${prod.name}</a>
+              </h3>
+              <div class="catalog-card-pricing">
+                <span class="catalog-card-price">${formatRupiah(prod.price)}</span>
+                ${prod.discount > 0 ? `<span class="catalog-card-original">${formatRupiah(prod.originalPrice)}</span>` : ''}
+                ${prod.discount > 0 ? `<span class="catalog-card-discount">${prod.discount}%</span>` : ''}
+              </div>
+            </div>
+          </article>
+        `).join('');
+      }
+    });
+  }
+}
+
 

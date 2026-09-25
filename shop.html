@@ -14,7 +14,7 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <link rel="stylesheet" href="shop.css?v=3">
+  <link rel="stylesheet" href="shop.css?v=4">
   <link rel="stylesheet" href="size-guide.css">
   <link rel="stylesheet" href="auth.css?v=2">
 </head>
@@ -276,22 +276,387 @@
         </ul>
       </nav>
 
-      <!-- Right Header Actions -->
+      <!-- Right Header Actions (Search & Cart) -->
       <div class="header-actions">
+        <!-- Search Bar -->
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
           <input type="text" id="searchInput" class="search-input" placeholder="Search" autocomplete="off">
         </div>
+
         <!-- Auth Slot (Login / Profile) -->
         <div class="header-auth-slot" id="headerAuthSlot"></div>
+
+        <!-- Cart Icon -->
         <a href="cart.html" class="cart-btn" id="cartBtn" aria-label="Shopping Cart">
           <i class="fa-solid fa-cart-shopping"></i>
           <span class="cart-badge" id="cartCount">0</span>
         </a>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Open Navigation Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
       </div>
 
     </div>
   </header>
+
+  <!-- Mobile Drawer Menu (with Multi-Category Slide-in Subpanels) -->
+  <div class="mobile-drawer" id="mobileDrawer">
+    <!-- VIEW 1: MAIN MENU -->
+    <div class="drawer-view drawer-view-main" id="drawerViewMain">
+      <div class="drawer-header">
+        <img src="Asset/Logo/logo.png" alt="Sports Station" class="drawer-logo">
+        <button type="button" class="drawer-close" id="drawerClose" aria-label="Tutup Menu"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <ul class="drawer-links">
+        <li>
+          <button type="button" class="drawer-link-btn" data-subview="drawerSubBrands">
+            <span>BRANDS</span>
+            <i class="fa-solid fa-chevron-right drawer-arrow-icon"></i>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="drawer-link-btn" data-subview="drawerSubSports">
+            <span>SPORTS</span>
+            <i class="fa-solid fa-chevron-right drawer-arrow-icon"></i>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="drawer-link-btn" data-subview="drawerSubMen">
+            <span>MEN</span>
+            <i class="fa-solid fa-chevron-right drawer-arrow-icon"></i>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="drawer-link-btn" data-subview="drawerSubWomen">
+            <span>WOMEN</span>
+            <i class="fa-solid fa-chevron-right drawer-arrow-icon"></i>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="drawer-link-btn" data-subview="drawerSubKids">
+            <span>KIDS</span>
+            <i class="fa-solid fa-chevron-right drawer-arrow-icon"></i>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="drawer-link-btn" data-subview="drawerSubEquipment">
+            <span>EQUIPMENT</span>
+            <i class="fa-solid fa-chevron-right drawer-arrow-icon"></i>
+          </button>
+        </li>
+        <li><a href="shop.html?sale=true" class="drawer-sale">SALE</a></li>
+      </ul>
+    </div>
+
+    <!-- SUBVIEW: BRANDS -->
+    <div class="drawer-subview" id="drawerSubBrands">
+      <div class="drawer-header brands-sub-header">
+        <button type="button" class="drawer-back-btn" data-back-to="drawerViewMain" aria-label="Kembali ke Menu Utama">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>BRANDS</span>
+        </button>
+        <button type="button" class="drawer-close drawer-sub-close" aria-label="Tutup Menu">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="brands-accordion-container" id="brandsAccordionContainer">
+        <!-- A-D -->
+        <div class="brand-acc-group active">
+          <button type="button" class="brand-acc-header">
+            <span>A-D</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="brand-acc-body">
+            <a href="shop.html?brand=adidas" class="brand-item-link">Adidas</a>
+            <a href="shop.html?brand=airwalk" class="brand-item-link">Airwalk</a>
+            <a href="shop.html?brand=astec" class="brand-item-link">Astec</a>
+            <a href="shop.html?brand=converse" class="brand-item-link">Converse</a>
+            <a href="shop.html?brand=diadora" class="brand-item-link">Diadora</a>
+          </div>
+        </div>
+
+        <!-- H-N -->
+        <div class="brand-acc-group">
+          <button type="button" class="brand-acc-header">
+            <span>H-N</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="brand-acc-body">
+            <a href="shop.html?brand=hoka" class="brand-item-link">Hoka</a>
+            <a href="shop.html?brand=jordan" class="brand-item-link">Jordan</a>
+            <a href="shop.html?brand=nb" class="brand-item-link">New Balance</a>
+            <a href="shop.html?brand=nike" class="brand-item-link">Nike</a>
+          </div>
+        </div>
+
+        <!-- P-S -->
+        <div class="brand-acc-group">
+          <button type="button" class="brand-acc-header">
+            <span>P-S</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="brand-acc-body">
+            <a href="shop.html?brand=prince" class="brand-item-link">Prince</a>
+            <a href="shop.html?brand=puma" class="brand-item-link">Puma</a>
+            <a href="shop.html?brand=reebok" class="brand-item-link">Reebok</a>
+            <a href="shop.html?brand=skechers" class="brand-item-link">Skechers</a>
+            <a href="shop.html?brand=speedo" class="brand-item-link">Speedo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBVIEW: SPORTS -->
+    <div class="drawer-subview" id="drawerSubSports">
+      <div class="drawer-header">
+        <button type="button" class="drawer-back-btn" data-back-to="drawerViewMain">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>SPORTS</span>
+        </button>
+        <button type="button" class="drawer-close drawer-sub-close" aria-label="Tutup Menu"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-subview-content">
+        <div class="drawer-acc-group active">
+          <button type="button" class="drawer-acc-header">
+            <span>RUNNING &amp; TRAINING</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?sport=running" class="drawer-sub-link">Running</a>
+            <a href="shop.html?sport=walking" class="drawer-sub-link">Walking</a>
+            <a href="shop.html?sport=training" class="drawer-sub-link">Training &amp; Gym</a>
+            <a href="shop.html?sport=fitness" class="drawer-sub-link">Fitness &amp; Yoga</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>COURT &amp; RACKET</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?sport=basketball" class="drawer-sub-link">Basketball</a>
+            <a href="shop.html?sport=badminton" class="drawer-sub-link">Badminton</a>
+            <a href="shop.html?sport=tennis" class="drawer-sub-link">Tennis</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>TEAM &amp; LIFESTYLE</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?sport=football" class="drawer-sub-link">Football &amp; Futsal</a>
+            <a href="shop.html?sport=swimming" class="drawer-sub-link">Swimming</a>
+            <a href="shop.html?sport=sneakers" class="drawer-sub-link">Lifestyle &amp; Sneakers</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBVIEW: MEN -->
+    <div class="drawer-subview" id="drawerSubMen">
+      <div class="drawer-header">
+        <button type="button" class="drawer-back-btn" data-back-to="drawerViewMain">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>MEN</span>
+        </button>
+        <button type="button" class="drawer-close drawer-sub-close" aria-label="Tutup Menu"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-subview-content">
+        <div class="drawer-acc-group active">
+          <button type="button" class="drawer-acc-header">
+            <span>FOOTWEAR</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=men&sport=running" class="drawer-sub-link">Running</a>
+            <a href="shop.html?gender=men&sport=walking" class="drawer-sub-link">Walking</a>
+            <a href="shop.html?gender=men&sport=basketball" class="drawer-sub-link">Basketball</a>
+            <a href="shop.html?gender=men&sport=football" class="drawer-sub-link">Football &amp; Futsal</a>
+            <a href="shop.html?gender=men&sport=training" class="drawer-sub-link">Training &amp; Gym</a>
+            <a href="shop.html?gender=men&sport=sneakers" class="drawer-sub-link">Sneakers</a>
+            <a href="shop.html?gender=men&sport=sandals" class="drawer-sub-link">Sandals &amp; Slides</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>CLOTHING</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=men" class="drawer-sub-link">T-Shirts &amp; Polos</a>
+            <a href="shop.html?gender=men" class="drawer-sub-link">Hoodies &amp; Jackets</a>
+            <a href="shop.html?gender=men" class="drawer-sub-link">Pants &amp; Shorts</a>
+            <a href="shop.html?gender=men&sport=swimming" class="drawer-sub-link">Swimwear</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>ACCESSORIES</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=men" class="drawer-sub-link">Bags</a>
+            <a href="shop.html?gender=men" class="drawer-sub-link">Caps</a>
+            <a href="shop.html?gender=men" class="drawer-sub-link">Socks</a>
+            <a href="shop.html?gender=men" class="drawer-sub-link">Bottles</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBVIEW: WOMEN -->
+    <div class="drawer-subview" id="drawerSubWomen">
+      <div class="drawer-header">
+        <button type="button" class="drawer-back-btn" data-back-to="drawerViewMain">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>WOMEN</span>
+        </button>
+        <button type="button" class="drawer-close drawer-sub-close" aria-label="Tutup Menu"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-subview-content">
+        <div class="drawer-acc-group active">
+          <button type="button" class="drawer-acc-header">
+            <span>FOOTWEAR</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=women&sport=running" class="drawer-sub-link">Running</a>
+            <a href="shop.html?gender=women&sport=walking" class="drawer-sub-link">Walking</a>
+            <a href="shop.html?gender=women&sport=fitness" class="drawer-sub-link">Fitness &amp; Training</a>
+            <a href="shop.html?gender=women&sport=basketball" class="drawer-sub-link">Basketball</a>
+            <a href="shop.html?gender=women&sport=badminton" class="drawer-sub-link">Badminton</a>
+            <a href="shop.html?gender=women&sport=tennis" class="drawer-sub-link">Tennis</a>
+            <a href="shop.html?gender=women&sport=sneakers" class="drawer-sub-link">Sneakers</a>
+            <a href="shop.html?gender=women&sport=sandals" class="drawer-sub-link">Sandals &amp; Slides</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>CLOTHING</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=women" class="drawer-sub-link">T-Shirts &amp; Polos</a>
+            <a href="shop.html?gender=women" class="drawer-sub-link">Sports Bra</a>
+            <a href="shop.html?gender=women" class="drawer-sub-link">Hoodies &amp; Jackets</a>
+            <a href="shop.html?gender=women" class="drawer-sub-link">Pants &amp; Shorts</a>
+            <a href="shop.html?gender=women&sport=swimming" class="drawer-sub-link">Swimwear</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>ACCESSORIES</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=women" class="drawer-sub-link">Bags</a>
+            <a href="shop.html?gender=women" class="drawer-sub-link">Caps</a>
+            <a href="shop.html?gender=women" class="drawer-sub-link">Socks</a>
+            <a href="shop.html?gender=women" class="drawer-sub-link">Bottles</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBVIEW: KIDS -->
+    <div class="drawer-subview" id="drawerSubKids">
+      <div class="drawer-header">
+        <button type="button" class="drawer-back-btn" data-back-to="drawerViewMain">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>KIDS</span>
+        </button>
+        <button type="button" class="drawer-close drawer-sub-close" aria-label="Tutup Menu"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-subview-content">
+        <div class="drawer-acc-group active">
+          <button type="button" class="drawer-acc-header">
+            <span>FOOTWEAR</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=kids&sport=running" class="drawer-sub-link">Running</a>
+            <a href="shop.html?gender=kids&sport=sneakers" class="drawer-sub-link">Sneakers</a>
+            <a href="shop.html?gender=kids&sport=sandals" class="drawer-sub-link">Sandals &amp; Slides</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>CLOTHING</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=kids" class="drawer-sub-link">T-Shirts &amp; Polos</a>
+            <a href="shop.html?gender=kids" class="drawer-sub-link">Hoodies &amp; Jackets</a>
+            <a href="shop.html?gender=kids" class="drawer-sub-link">Pants &amp; Shorts</a>
+            <a href="shop.html?gender=kids&sport=swimming" class="drawer-sub-link">Swimwear</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>ACCESSORIES</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?gender=kids" class="drawer-sub-link">Bags</a>
+            <a href="shop.html?gender=kids" class="drawer-sub-link">Caps</a>
+            <a href="shop.html?gender=kids" class="drawer-sub-link">Socks</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBVIEW: EQUIPMENT -->
+    <div class="drawer-subview" id="drawerSubEquipment">
+      <div class="drawer-header">
+        <button type="button" class="drawer-back-btn" data-back-to="drawerViewMain">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>EQUIPMENT</span>
+        </button>
+        <button type="button" class="drawer-close drawer-sub-close" aria-label="Tutup Menu"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="drawer-subview-content">
+        <div class="drawer-acc-group active">
+          <button type="button" class="drawer-acc-header">
+            <span>BALLS &amp; RACKETS</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html" class="drawer-sub-link">Bola Olahraga (Football, Basketball)</a>
+            <a href="shop.html" class="drawer-sub-link">Raket &amp; Shuttlecock (Badminton, Tennis)</a>
+          </div>
+        </div>
+
+        <div class="drawer-acc-group">
+          <button type="button" class="drawer-acc-header">
+            <span>FITNESS &amp; GEAR</span>
+            <i class="fa-solid fa-chevron-down acc-icon"></i>
+          </button>
+          <div class="drawer-acc-body">
+            <a href="shop.html?sport=swimming" class="drawer-sub-link">Perlengkapan Renang (Kacamata &amp; Topi)</a>
+            <a href="shop.html" class="drawer-sub-link">Perlengkapan Fitness &amp; Deker</a>
+            <a href="shop.html" class="drawer-sub-link">Tas Olahraga &amp; Ransel</a>
+            <a href="shop.html" class="drawer-sub-link">Botol Minum Olahraga</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="filter-backdrop" id="filterBackdrop"></div>
 
   <!-- Main Shop Catalog Page Content -->
   <main class="shop-main">
@@ -301,15 +666,54 @@
       <h1 class="shop-page-title" id="shopTitle">Sports / Running</h1>
     </div>
 
+    <!-- Mobile Promo Announcement & Filter Trigger Bar (matching official Sports Station mobile) -->
+    <div class="mobile-shop-top-bar">
+      <div class="mobile-promo-announcement">
+        <p class="promo-text">Free Shipping - On all order</p>
+        <span class="promo-dot">*</span>
+      </div>
+      <div class="mobile-filter-btn-wrap">
+        <button type="button" class="btn-mobile-filter" id="mobileFilterBtn" aria-label="Buka Filter dan Urutkan">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Filter &amp; Sort</span>
+          <span class="mobile-filter-badge" id="mobileFilterBadge" style="display:none;">0</span>
+        </button>
+      </div>
+    </div>
+
     <!-- 2-Column Catalog Layout -->
     <div class="shop-layout">
       
       <!-- LEFT SIDEBAR: FILTERS -->
-      <aside class="filters-sidebar">
+      <aside class="filters-sidebar" id="filtersSidebar">
         
+        <!-- Mobile Drawer Header -->
+        <div class="filters-sidebar-mobile-header">
+          <h3 class="filters-mobile-title">Filter &amp; Sort</h3>
+          <button type="button" class="filters-sidebar-close" id="filtersSidebarClose" aria-label="Tutup Filter">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
         <div class="filters-header">
           <h2 class="filters-title">Filters</h2>
           <span class="btn-reset-filters" id="resetFiltersBtn">Clear All</span>
+        </div>
+
+        <!-- Mobile Sort Section (Visible in mobile drawer) -->
+        <div class="filter-group mobile-only-group" id="filterMobileSortGroup">
+          <div class="filter-group-header">
+            <span class="filter-group-title">Urutkan (Sort By)</span>
+            <i class="fa-solid fa-chevron-up filter-toggle-icon"></i>
+          </div>
+          <div class="filter-group-content">
+            <div class="mobile-sort-chips" id="mobileSortChips">
+              <button type="button" class="mobile-sort-chip active" data-sort="relevance">Relevance</button>
+              <button type="button" class="mobile-sort-chip" data-sort="price-low">Price: Low to High</button>
+              <button type="button" class="mobile-sort-chip" data-sort="price-high">Price: High to Low</button>
+              <button type="button" class="mobile-sort-chip" data-sort="name-asc">Product Name (A-Z)</button>
+            </div>
+          </div>
         </div>
 
         <!-- 1. Price Filter -->
@@ -450,6 +854,13 @@
             <div class="filter-options-list" id="brandOptionsList">
               <label class="filter-checkbox-label">
                 <div class="checkbox-left">
+                  <input type="checkbox" name="brand" value="asics">
+                  <span>Asics</span>
+                </div>
+                <span class="filter-count">(5)</span>
+              </label>
+              <label class="filter-checkbox-label">
+                <div class="checkbox-left">
                   <input type="checkbox" name="brand" value="nike">
                   <span>Nike</span>
                 </div>
@@ -552,6 +963,12 @@
               </a>
             </div>
           </div>
+        </div>
+
+        <!-- Mobile Sticky Footer for Filter Drawer -->
+        <div class="filters-sidebar-mobile-footer" id="filtersSidebarMobileFooter">
+          <button type="button" class="btn-mobile-clear-all" id="mobileClearAllBtn">Clear All</button>
+          <button type="button" class="btn-mobile-apply" id="btnMobileApply">Terapkan Filter</button>
         </div>
 
       </aside>

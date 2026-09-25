@@ -227,58 +227,62 @@ const server = http.createServer(async (req, res) => {
         const distanceKm = Math.max(2, getDistanceFromLatLonInKm(SPORTS_STATION_ORIGIN.lat, SPORTS_STATION_ORIGIN.lng, destLat, destLng));
         const distRounded = Math.round(distanceKm * 10) / 10;
 
+        const isJabodetabek = distanceKm <= 45;
+        const isJava = distanceKm <= 850;
+
         const calculatedRates = [
           {
             courier_name: 'JNE',
             courier_code: 'jne',
-            service_name: 'Reguler (2-3 Hari)',
-            price: Math.max(12000, 10000 + Math.round((distanceKm * 450) / 1000) * 1000),
-            duration: '2 - 3 Hari',
-            description: 'Pengiriman standar reguler via JNE'
+            service_name: 'Reguler',
+            price: Math.max(12000, (isJabodetabek ? 10000 : (isJava ? 10000 + Math.round((distanceKm * 18) / 1000) * 1000 : 22000 + Math.round((distanceKm * 24) / 1000) * 1000))),
+            duration: isJabodetabek ? '1 - 2 Hari' : (isJava ? '2 - 3 Hari' : '3 - 5 Hari'),
+            description: 'Pengiriman reguler terpercaya JNE'
           },
           {
             courier_name: 'SiCepat',
             courier_code: 'sicepat',
-            service_name: 'BEST (1-2 Hari)',
-            price: Math.max(15000, 14000 + Math.round((distanceKm * 500) / 1000) * 1000),
-            duration: '1 - 2 Hari',
+            service_name: 'BEST',
+            price: Math.max(15000, (isJabodetabek ? 14000 : (isJava ? 14000 + Math.round((distanceKm * 20) / 1000) * 1000 : 26000 + Math.round((distanceKm * 26) / 1000) * 1000))),
+            duration: isJabodetabek ? '1 Hari' : '1 - 2 Hari',
             description: 'Layanan kilat express SiCepat'
           },
           {
             courier_name: 'J&T',
             courier_code: 'jnt',
-            service_name: 'Express (2-3 Hari)',
-            price: Math.max(13000, 11000 + Math.round((distanceKm * 460) / 1000) * 1000),
-            duration: '2 - 3 Hari',
+            service_name: 'Express',
+            price: Math.max(13000, (isJabodetabek ? 11000 : (isJava ? 11000 + Math.round((distanceKm * 19) / 1000) * 1000 : 24000 + Math.round((distanceKm * 25) / 1000) * 1000))),
+            duration: isJabodetabek ? '1 - 2 Hari' : '2 - 3 Hari',
             description: 'Layanan express terpercaya J&T'
           },
           {
             courier_name: 'AnterAja',
             courier_code: 'anteraja',
-            service_name: 'Reguler (2-3 Hari)',
-            price: Math.max(11500, 9500 + Math.round((distanceKm * 400) / 1000) * 1000),
-            duration: '2 - 3 Hari',
+            service_name: 'Reguler',
+            price: Math.max(11000, (isJabodetabek ? 9000 : (isJava ? 9000 + Math.round((distanceKm * 17) / 1000) * 1000 : 20000 + Math.round((distanceKm * 22) / 1000) * 1000))),
+            duration: isJabodetabek ? '1 - 2 Hari' : '2 - 4 Hari',
             description: 'Layanan hemat pengiriman AnterAja'
           }
         ];
 
         // If distance is within instant radius (<= 40 km), offer instant couriers
-        if (distanceKm <= 40) {
+        if (isJabodetabek) {
           calculatedRates.push({
-            courier_name: 'GoSend',
-            courier_code: 'gojek',
-            service_name: 'Instant (Hari Ini)',
-            price: Math.max(20000, 15000 + Math.round((distanceKm * 1500) / 1000) * 1000),
-            duration: '1 - 3 Jam',
+            courier_name: 'GoSend / Grab',
+            courier_code: 'gosend',
+            service_name: 'Instant (1-3 Jam)',
+            price: Math.max(20000, 15000 + Math.round((distanceKm * 1200) / 1000) * 1000),
+            duration: '1 - 3 Jam (Hari Ini)',
             description: 'Pengantaran motor instan tiba hari ini'
           });
+        } else {
           calculatedRates.push({
-            courier_name: 'GrabExpress',
-            courier_code: 'grab',
-            service_name: 'Instant (Hari Ini)',
-            price: Math.max(22000, 16000 + Math.round((distanceKm * 1400) / 1000) * 1000),
-            duration: '1 - 3 Jam',
-            description: 'Pengantaran instan Grab tiba hari ini'
+            courier_name: 'JNE',
+            courier_code: 'jne',
+            service_name: 'YES (Yakin Esok Sampai)',
+            price: Math.max(24000, 22000 + Math.round((distanceKm * 32) / 1000) * 1000),
+            duration: '1 Hari Kerja',
+            description: 'Garansi tiba keesokan harinya'
           });
         }
 

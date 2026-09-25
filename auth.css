@@ -594,3 +594,320 @@
     padding: 7px 10px;
   }
 }
+
+/* ==========================================================================
+   USER PROFILE MODAL (Akun & Profil Saya)
+   ========================================================================== */
+.user-profile-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+  box-sizing: border-box;
+}
+
+.user-profile-modal-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.user-profile-modal-card {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.user-profile-modal-backdrop.active .user-profile-modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.user-profile-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+}
+
+.user-profile-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-profile-close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.user-profile-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.user-profile-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-card-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.profile-modal-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f95a00, #ea580c);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(249, 90, 0, 0.22);
+}
+
+.profile-modal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.profile-modal-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.profile-modal-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profile-pill-role {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.profile-pill-id {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.profile-pill-points {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.profile-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.profile-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.profile-form-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.profile-form-input:focus {
+  border-color: #f95a00;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(249, 90, 0, 0.12);
+}
+
+.profile-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.profile-btn-save {
+  width: 100%;
+  padding: 10px;
+  background-color: #f95a00;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.profile-btn-save:hover {
+  background-color: #e04f00;
+}
+
+.profile-btn-save:active {
+  transform: scale(0.99);
+}
+
+.profile-sub-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+}
+
+.profile-sub-link {
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+
+.profile-sub-link:hover {
+  color: #f95a00;
+}
+
+.profile-sub-logout {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+}
+
+.profile-sub-logout:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   OFFICIAL SPORTS STATION SIMPLE TOAST NOTIFICATION (Exact Match to Screenshot)
+   ========================================================================== */
+.sports-toast {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  padding: 12px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  z-index: 10000 !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  font-family: var(--font-body, 'Inter', -apple-system, sans-serif) !important;
+  box-sizing: border-box !important;
+}
+
+.sports-toast.show {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+.sports-toast-icon {
+  font-size: 15px !important;
+  flex-shrink: 0 !important;
+  color: #22c55e !important;
+}
+
+.sports-toast.toast-error .sports-toast-icon {
+  color: #ef4444 !important;
+}
+
+.sports-toast.toast-warning .sports-toast-icon {
+  color: #f59e0b !important;
+}
+
+.sports-toast-text {
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  color: #1f2937 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.1px !important;
+}
+

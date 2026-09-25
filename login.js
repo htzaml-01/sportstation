@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       showAlert(`Anda sudah masuk sebagai ${currentUser.name}. Mengalihkan...`, 'success');
       setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 1200);
+        window.location.href = getRedirectUrl();
+      }, 1000);
       return;
     }
   }
@@ -47,33 +47,61 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Function to switch auth modes
+  function setAuthMode(mode) {
+    currentMode = mode;
+    hideAlert();
+    if (mode === 'signup') {
+      authHeading.textContent = 'Create Account';
+      toggleAuthLink.textContent = 'Already have an account? Sign In';
+      nameGroup.style.display = 'block';
+      submitAuthBtn.textContent = 'Create Account';
+      if (forgotPassLink && forgotPassLink.parentElement) {
+        forgotPassLink.parentElement.style.display = 'none';
+      }
+      setTimeout(() => {
+        if (nameInput) nameInput.focus();
+      }, 60);
+    } else {
+      currentMode = 'signin';
+      authHeading.textContent = 'Sign In';
+      toggleAuthLink.textContent = "I don't have an account";
+      nameGroup.style.display = 'none';
+      submitAuthBtn.textContent = 'Sign In';
+      if (forgotPassLink && forgotPassLink.parentElement) {
+        forgotPassLink.parentElement.style.display = 'flex';
+      }
+      setTimeout(() => {
+        if (emailInput) emailInput.focus();
+      }, 60);
+    }
+  }
+
+  // Check URL parameter (?mode=signup)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('mode') === 'signup' || urlParams.get('action') === 'signup') {
+    setAuthMode('signup');
+  }
+
+  // Notifikasi jika diarahkan dari checkout karena belum login
+  const redirectTarget = urlParams.get('redirect');
+  if (redirectTarget && redirectTarget.includes('checkout')) {
+    showAlert('Silakan masuk ke akun Anda terlebih dahulu untuk menyelesaikan pesanan dan pembayaran (checkout).', 'error');
+  }
+
   // Switch between Sign In and Sign Up (Create Account)
   if (toggleAuthLink) {
     toggleAuthLink.addEventListener('click', (e) => {
       e.preventDefault();
-      hideAlert();
-      if (currentMode === 'signin') {
-        currentMode = 'signup';
-        authHeading.textContent = 'Create Account';
-        toggleAuthLink.textContent = 'Already have an account? Sign In';
-        nameGroup.style.display = 'block';
-        submitAuthBtn.textContent = 'Create Account';
-        forgotPassLink.parentElement.style.display = 'none';
-      } else {
-        currentMode = 'signin';
-        authHeading.textContent = 'Sign In';
-        toggleAuthLink.textContent = "I don't have an account";
-        nameGroup.style.display = 'none';
-        submitAuthBtn.textContent = 'Sign In';
-        forgotPassLink.parentElement.style.display = 'flex';
-      }
+      setAuthMode(currentMode === 'signin' ? 'signup' : 'signin');
     });
   }
 
   // Demo auto-fill helper
   if (demoFillBtn) {
     demoFillBtn.addEventListener('click', () => {
-      emailInput.value = 'user@sportsstation.id';
+      setAuthMode('signin');
+      emailInput.value = 'aznidaniswata@gmail.com';
       passwordInput.value = 'SportsStation123';
       hideAlert();
     });
@@ -83,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminFillBtn = document.getElementById('adminFillBtn');
   if (adminFillBtn) {
     adminFillBtn.addEventListener('click', () => {
+      setAuthMode('signin');
       emailInput.value = 'admin';
       passwordInput.value = 'admin123';
       hideAlert();
@@ -121,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitAuthBtn.textContent = originalText;
 
         if (currentMode === 'signin') {
-          // Process Sign In
+          // Process Sign In: Wajib akun terdaftar
           const result = window.SportsStationAuth.login(email, password);
           if (result.success) {
             if (result.user.role === 'admin') {
@@ -136,10 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
               }, 900);
             }
           } else {
-            showAlert(result.message || 'Gagal masuk. Periksa kembali email dan kata sandi.', 'error');
+            if (result.notRegistered) {
+              showAlert(`
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                  <div><strong>Akun Belum Terdaftar!</strong> Email "<strong>${email}</strong>" belum terdaftar. Anda harus daftar akun terlebih dahulu untuk bisa masuk.</div>
+                  <button type="button" id="btnSwitchToSignUpNow" style="background: #0f172a; color: #ffffff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-user-plus"></i> Daftar Akun Sekarang
+                  </button>
+                </div>
+              `, 'error');
+              const btnSwitch = document.getElementById('btnSwitchToSignUpNow');
+              if (btnSwitch) {
+                btnSwitch.addEventListener('click', () => {
+                  setAuthMode('signup');
+                });
+              }
+            } else {
+              showAlert(result.message || 'Gagal masuk. Periksa kembali email dan kata sandi.', 'error');
+            }
           }
         } else {
-          // Process Sign Up
+          // Process Sign Up: Mendaftar akun baru
           const name = nameInput.value.trim();
           if (!name) {
             showAlert('Silakan masukkan nama lengkap Anda.', 'error');
@@ -153,10 +199,27 @@ document.addEventListener('DOMContentLoaded', () => {
               window.location.href = getRedirectUrl();
             }, 900);
           } else {
-            showAlert(result.message || 'Gagal mendaftar.', 'error');
+            if (result.alreadyRegistered) {
+              showAlert(`
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                  <div><strong>${result.message}</strong></div>
+                  <button type="button" id="btnSwitchToSignInNow" style="background: #0f172a; color: #ffffff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Masuk Sekarang (Sign In)
+                  </button>
+                </div>
+              `, 'error');
+              const btnSwitch = document.getElementById('btnSwitchToSignInNow');
+              if (btnSwitch) {
+                btnSwitch.addEventListener('click', () => {
+                  setAuthMode('signin');
+                });
+              }
+            } else {
+              showAlert(result.message || 'Gagal mendaftar.', 'error');
+            }
           }
         }
-      }, 500);
+      }, 400);
     });
   }
 

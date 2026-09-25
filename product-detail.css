@@ -995,6 +995,60 @@ ul {
 
 /* Responsive */
 @media (max-width: 992px) {
+  .site-top-bar {
+    display: none !important;
+  }
+
+  .header-container {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo-img {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .nav-menu {
+    display: none;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  .header-actions .search-box {
+    display: none;
+  }
+
+  .mobile-toggle {
+    display: block !important;
+    font-size: 20px;
+    color: #1a1a1a;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .cart-btn {
+    font-size: 20px;
+    color: #1a1a1a;
+    padding: 4px;
+  }
+
   .pdp-grid {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -1005,9 +1059,6 @@ ul {
   .footer-cols-grid {
     grid-template-columns: 1fr 1fr;
     gap: 30px;
-  }
-  .nav-menu {
-    display: none;
   }
 }
 
@@ -1026,4 +1077,310 @@ ul {
   .footer-cols-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==========================================================================
+   MOBILE DRAWER NAVIGATION & BRANDS SLIDE-IN SUBPANEL (PDP)
+   ========================================================================== */
+.mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #1f2937;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: -340px;
+  width: min(330px, 88vw);
+  height: 100vh;
+  background-color: #ffffff;
+  z-index: 3000;
+  box-shadow: 6px 0 25px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  transition: left 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.mobile-drawer.open {
+  left: 0;
+}
+
+.drawer-views-wrapper {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-drawer.show-brands-view .drawer-views-wrapper {
+  transform: translateX(-50%);
+}
+
+.drawer-view {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  min-height: 56px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.drawer-logo {
+  height: 28px;
+}
+
+.drawer-close {
+  background: none;
+  border: none;
+  font-size: 19px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.drawer-close:hover {
+  color: #0f172a;
+}
+
+.drawer-back-btn {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+}
+
+.drawer-back-btn i {
+  font-size: 13px;
+  color: #475569;
+}
+
+.drawer-back-btn:hover,
+.drawer-back-btn:hover i {
+  color: #f95a00;
+}
+
+.drawer-links {
+  padding: 14px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.drawer-links li {
+  list-style: none;
+}
+
+.drawer-link-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s ease;
+}
+
+.drawer-link-btn:hover {
+  color: #f95a00;
+}
+
+.drawer-arrow-icon {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.drawer-links a {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.drawer-links a:hover {
+  color: #f95a00;
+}
+
+.drawer-sale {
+  color: #e53e3e !important;
+  font-weight: 700 !important;
+}
+
+/* Sub-views that slide in from the side for any category */
+.drawer-subview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.drawer-subview.active {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.drawer-subview-content {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0 24px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.brands-accordion-container {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0 24px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Accordion Group Panels (Exact replica of sportsstation.id mobile) */
+.brand-acc-group,
+.drawer-acc-group {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.brand-acc-header,
+.drawer-acc-header {
+  width: 100%;
+  background: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 13.5px;
+  font-weight: 400 !important;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.brand-acc-header:hover,
+.drawer-acc-header:hover {
+  background: #f8fafc;
+}
+
+.brand-acc-header .acc-icon,
+.drawer-acc-header .acc-icon {
+  font-size: 11px;
+  color: #94a3b8;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brand-acc-group.active .brand-acc-header .acc-icon,
+.drawer-acc-group.active .drawer-acc-header .acc-icon {
+  transform: rotate(180deg);
+}
+
+.brand-acc-body,
+.drawer-acc-body {
+  max-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  opacity: 0;
+  background: #ffffff;
+}
+
+.brand-acc-group.active .brand-acc-body,
+.drawer-acc-group.active .drawer-acc-body {
+  max-height: 1200px;
+  opacity: 1;
+  padding-bottom: 6px;
+}
+
+/* Thinner, slightly faded/muted font (per user request: tipisin sama agak pudar) */
+.brand-item-link,
+.drawer-sub-link {
+  padding: 9px 20px 9px 24px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 13.5px;
+  font-weight: 300 !important;
+  color: #71717a !important;
+  text-decoration: none;
+  display: block;
+  letter-spacing: 0.15px;
+  transition: background 0.12s ease, color 0.12s ease, padding-left 0.12s ease;
+}
+
+.brand-item-link:hover,
+.brand-item-link:active,
+.drawer-sub-link:hover,
+.drawer-sub-link:active {
+  background: #f8fafc;
+  color: #09090b !important;
+  padding-left: 28px;
+}
+
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 2990;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.drawer-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
 }

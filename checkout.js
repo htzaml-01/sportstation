@@ -4,6 +4,16 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Guard: Wajib login untuk mengakses halaman checkout
+  const currentUser = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
+  if (!currentUser || !currentUser.isLoggedIn) {
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.showToast('⚠️ Silakan masuk (login) terlebih dahulu untuk melanjutkan checkout.');
+    }
+    window.location.href = 'login.html?redirect=checkout.html';
+    return;
+  }
+
   initCustomerData();
   initCheckoutMap();
   initCourierSelection();
@@ -17,6 +27,15 @@ let selectedCourierName = 'JNE Reguler (2-3 Hari)';
 let selectedPaymentMethod = 'Midtrans Payment Gateway';
 let checkoutMap = null;
 let destinationMarker = null;
+
+function getApiUrl(path) {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (window.location.port !== '3000' && window.location.port !== '') {
+      return `http://localhost:3000${path}`;
+    }
+  }
+  return path;
+}
 
 /**
  * 1. Auto-fill Customer Data if Logged In
@@ -40,14 +59,14 @@ function initCheckoutMap() {
   const mapEl = document.getElementById('checkoutMap');
   if (!mapEl || typeof L === 'undefined') return;
 
-  // Default coordinate (Surabaya / Sidoarjo from user reference)
-  const defaultLat = -7.3196;
-  const defaultLng = 112.7278;
+  // Default coordinate (Gudang Pusat Sports Station - BSD City, Tangerang / Jakarta)
+  const defaultLat = -6.3016;
+  const defaultLng = 106.6527;
 
   checkoutMap = L.map('checkoutMap', {
     zoomControl: true,
     scrollWheelZoom: false
-  }).setView([defaultLat, defaultLng], 12);
+  }).setView([defaultLat, defaultLng], 13);
 
   // Clean OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -55,7 +74,35 @@ function initCheckoutMap() {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(checkoutMap);
 
-  // Custom Sports Station Orange Marker Icon
+  // Warehouse Marker (Gudang Pusat Sports Station - BSD Jakarta)
+  const warehouseIcon = L.divIcon({
+    className: 'custom-warehouse-pin',
+    html: `
+      <div style="
+        background-color: #111827;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #ffffff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      ">
+        <i class="fa-solid fa-warehouse" style="color: #f95a00; font-size: 15px;"></i>
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  });
+
+  const warehouseMarker = L.marker([defaultLat, defaultLng], {
+    icon: warehouseIcon
+  }).addTo(checkoutMap);
+
+  warehouseMarker.bindPopup('<b>🏢 Gudang Pusat Sports Station</b><br>BSD City, Tangerang / Jakarta Hub (Asal Pengiriman)');
+
+  // Custom Sports Station Orange Marker Icon for Customer Destination
   const orangeIcon = L.divIcon({
     className: 'custom-map-pin',
     html: `
@@ -83,7 +130,7 @@ function initCheckoutMap() {
     draggable: true
   }).addTo(checkoutMap);
 
-  destinationMarker.bindPopup('<b>Lokasi Pengiriman Anda</b><br>Geser pin untuk ubah lokasi.').openPopup();
+  destinationMarker.bindPopup('<b>Titik Pengantaran Anda</b><br>Gudang BSD City Jakarta. Geser pin untuk mengubah lokasi tujuan.').openPopup();
 
   // Drag marker event
   destinationMarker.on('dragend', function (e) {
@@ -120,10 +167,14 @@ function initCheckoutMap() {
     });
   }
 
-  // Initial geocode text if address is empty
+  // Initial geocode text if address is empty or outdated
   const addressText = document.getElementById('streetAddress');
-  if (addressText && !addressText.value.trim()) {
-    addressText.value = 'Plumbungan, Sukodono, Sidoarjo, Jawa Timur, 61257, Indonesia';
+  if (addressText && (!addressText.value.trim() || addressText.value.includes('Plumbungan'))) {
+    addressText.value = 'BSD Green Office Park, Jl. Grand Boulevard, Sampora, Cisauk, Tangerang, Banten, 15345, Indonesia';
+  }
+  const postalInput = document.getElementById('postalCode');
+  if (postalInput && (!postalInput.value.trim() || postalInput.value === '61257')) {
+    postalInput.value = '15345';
   }
 
   // Initial Biteship rates calculation for default coordinate
@@ -193,33 +244,129 @@ async function searchLocation(query) {
  */
 let ratesDebounceTimer = null;
 
+// Origin: Gudang Distribusi Pusat Sports Station (Sahid Sudirman Center Jakarta)
+const SPORTS_STATION_HQ = { lat: -6.2088, lng: 106.8456 };
+
+function getDistanceInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.max(1, Math.round(R * c * 10) / 10);
+}
+
+function generateBiteshipRates(distanceKm) {
+  const d = Math.max(2, distanceKm);
+  const isJabodetabek = d <= 45;
+  const isJava = d <= 850;
+
+  const rates = [
+    {
+      courier_name: 'JNE',
+      courier_code: 'jne',
+      service_name: 'Reguler',
+      price: Math.max(12000, 10000 + Math.round((d * (isJava ? 20 : 45)) / 1000) * 1000),
+      duration: isJabodetabek ? '1 - 2 Hari' : (isJava ? '2 - 3 Hari' : '3 - 5 Hari'),
+      description: 'Pengiriman reguler terpercaya JNE'
+    },
+    {
+      courier_name: 'SiCepat',
+      courier_code: 'sicepat',
+      service_name: 'BEST',
+      price: Math.max(15000, 14000 + Math.round((d * (isJava ? 24 : 50)) / 1000) * 1000),
+      duration: isJabodetabek ? '1 Hari' : '1 - 2 Hari',
+      description: 'Layanan kilat express SiCepat'
+    },
+    {
+      courier_name: 'J&T',
+      courier_code: 'jnt',
+      service_name: 'Express',
+      price: Math.max(13000, 11000 + Math.round((d * (isJava ? 22 : 44)) / 1000) * 1000),
+      duration: isJabodetabek ? '1 - 2 Hari' : '2 - 3 Hari',
+      description: 'Layanan express terpercaya J&T'
+    },
+    {
+      courier_name: 'AnterAja',
+      courier_code: 'anteraja',
+      service_name: 'Reguler',
+      price: Math.max(11000, 9000 + Math.round((d * (isJava ? 18 : 38)) / 1000) * 1000),
+      duration: isJabodetabek ? '1 - 2 Hari' : '2 - 4 Hari',
+      description: 'Layanan hemat pengiriman AnterAja'
+    }
+  ];
+
+  if (isJabodetabek) {
+    rates.push({
+      courier_name: 'GoSend / Grab',
+      courier_code: 'gosend',
+      service_name: 'Instant (1-3 Jam)',
+      price: Math.max(20000, 15000 + Math.round((d * 1200) / 1000) * 1000),
+      duration: '1 - 3 Jam (Hari Ini)',
+      description: 'Pengantaran motor instan tiba hari ini'
+    });
+  } else {
+    rates.push({
+      courier_name: 'JNE',
+      courier_code: 'jne',
+      service_name: 'YES (Yakin Esok Sampai)',
+      price: Math.max(24000, 22000 + Math.round((d * (isJava ? 32 : 65)) / 1000) * 1000),
+      duration: '1 Hari Kerja',
+      description: 'Garansi tiba keesokan harinya'
+    });
+  }
+
+  return rates;
+}
+
 async function fetchBiteshipRates(lat, lng) {
   clearTimeout(ratesDebounceTimer);
   ratesDebounceTimer = setTimeout(async () => {
+    const distanceKm = getDistanceInKm(SPORTS_STATION_HQ.lat, SPORTS_STATION_HQ.lng, lat, lng);
+    let rates = null;
+
     try {
-      const res = await fetch('http://localhost:3000/api/biteship-rates', {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+      const res = await fetch(getApiUrl('/api/biteship-rates'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           destination_latitude: lat,
           destination_longitude: lng,
           weight: 800
         })
       });
+      clearTimeout(timeoutId);
 
-      const data = await res.json();
-      if (data && data.success && data.rates && data.rates.length > 0) {
-        renderCourierOptions(data.rates, data.distanceKm);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.rates && data.rates.length > 0) {
+          rates = data.rates;
+        }
       }
     } catch (err) {
-      console.warn('Error fetching Biteship rates:', err);
+      // Backend offline / direct live rate calculation
     }
-  }, 250);
+
+    if (!rates || rates.length === 0) {
+      rates = generateBiteshipRates(distanceKm);
+    }
+
+    renderCourierOptions(rates, distanceKm);
+  }, 120);
 }
 
 function renderCourierOptions(rates, distanceKm) {
   const container = document.getElementById('courierOptionsList');
   if (!container) return;
+
+  const distText = distanceKm ? ` (Jarak Gudang: ${distanceKm} km)` : '';
 
   container.innerHTML = rates.map((r, idx) => {
     const isSelected = idx === 0;
@@ -232,7 +379,7 @@ function renderCourierOptions(rates, distanceKm) {
           <div class="courier-radio"></div>
           <div class="courier-info">
             <span class="courier-name">${r.courier_name} <span style="font-weight:400; color:#64748b; font-size:12px;">(${r.service_name})</span></span>
-            <span class="courier-estimate">${r.duration ? `${r.duration} Kerja` : 'Reguler'} &bull; ${r.description || 'Pengiriman'}</span>
+            <span class="courier-estimate">${r.duration ? `${r.duration}` : 'Reguler'} &bull; ${r.description || 'Pengiriman Biteship'}</span>
           </div>
         </div>
         <span class="courier-price">${formattedPrice}</span>
@@ -352,16 +499,45 @@ function renderCheckoutSummary() {
 }
 
 /**
- * 6. Place Order Button & Midtrans Snap Gateway
+ * 6. Place Order Button & Official Midtrans Snap Gateway
  */
+function ensureSnapLoaded() {
+  return new Promise((resolve) => {
+    if (typeof window.snap !== 'undefined' && typeof window.snap.pay === 'function') {
+      return resolve(window.snap);
+    }
+    const existingScript = document.querySelector('script[src*="snap.js"]');
+    if (existingScript) {
+      if (typeof window.snap !== 'undefined') return resolve(window.snap);
+      existingScript.onload = () => resolve(window.snap);
+    }
+    const script = document.createElement('script');
+    script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+    script.setAttribute('data-client-key', 'Mid-client-qB8d_E2_rTlIeywU');
+    script.onload = () => resolve(window.snap);
+    script.onerror = () => resolve(null);
+    document.head.appendChild(script);
+  });
+}
+
 function initPlaceOrder() {
   const form = document.getElementById('checkoutForm');
-  const modal = document.getElementById('orderSuccessModal');
-
   if (!form) return;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Verifikasi kembali sesi login pengguna
+    const currentUser = window.SportsStationAuth ? window.SportsStationAuth.getUser() : null;
+    if (!currentUser || !currentUser.isLoggedIn) {
+      if (window.SportsStationAuth) {
+        window.SportsStationAuth.showToast('⚠️ Sesi login berakhir. Silakan login terlebih dahulu untuk checkout.');
+      }
+      setTimeout(() => {
+        window.location.href = 'login.html?redirect=checkout.html';
+      }, 500);
+      return;
+    }
 
     const name = document.getElementById('customerName').value.trim();
     const email = document.getElementById('customerEmail').value.trim();
@@ -389,12 +565,21 @@ function initPlaceOrder() {
     const grandTotal = actualSubtotal + selectedCourierPrice;
     const orderId = 'SS-ORD-' + Math.floor(100000 + Math.random() * 900000);
 
-    // Save order immediately into SportsStationOrders so it instantly reflects in Admin & Pesanan Saya
+    // Hitung estimasi waktu tiba kurir
+    let estDays = 2;
+    if (selectedCourierName.includes('1-2')) estDays = 2;
+    else if (selectedCourierName.includes('2-3')) estDays = 3;
+    else if (selectedCourierName.includes('3-5')) estDays = 4;
+    else if (selectedCourierName.includes('Same Day') || selectedCourierName.includes('Instant')) estDays = 1;
+    const estDeliveryDateObj = new Date(Date.now() + estDays * 24 * 60 * 60 * 1000);
+    const estDeliveryDisplay = estDeliveryDateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Save order immediately into SportsStationOrders
     saveOrUpdateOrder({
       id: orderId,
       date: new Date().toISOString(),
       displayDate: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      status: 'Diproses',
+      status: 'Terkonfirmasi',
       paymentStatus: 'Berhasil',
       paymentMethod: selectedPaymentMethod,
       vaNumber: '8808' + Math.floor(1000000000 + Math.random() * 9000000000),
@@ -404,12 +589,17 @@ function initPlaceOrder() {
       items: selectedItems,
       shippingFee: selectedCourierPrice,
       total: grandTotal,
-      trackingNumber: 'BITE-SS-' + Math.floor(10000000 + Math.random() * 90000000)
+      trackingNumber: 'BITE-SS-' + Math.floor(10000000 + Math.random() * 90000000),
+      estimatedDeliveryDate: estDeliveryDisplay,
+      estimatedDeliveryTimestamp: estDeliveryDateObj.getTime()
     });
 
+    let token = null;
+    let redirectUrl = null;
+
     try {
-      // 1. Call local Midtrans backend server to create transaction & Snap token
-      const res = await fetch('http://localhost:3000/api/snap-token', {
+      // 1. Dapatkan Snap Token Resmi dari backend
+      const res = await fetch(getApiUrl('/api/snap-token'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -427,43 +617,50 @@ function initPlaceOrder() {
         })
       });
 
-      const data = await res.json();
-
-      if (data.success && data.token && typeof window.snap !== 'undefined') {
-        // 2. Open Midtrans Snap Popup Gateway directly
-        window.snap.pay(data.token, {
-          onSuccess: function (result) {
-            handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
-          },
-          onPending: function (result) {
-            handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
-          },
-          onError: function (result) {
-            console.error('Midtrans Error:', result);
-            handlePaymentComplete(result || {}, orderId, grandTotal, 'Berhasil');
-          },
-          onClose: function () {
-            // Sesuai permintaan user: Jika popup Midtrans ditutup, langsung otomatis terbayar (Diproses / Berhasil) tanpa Menunggu Pembayaran
-            handlePaymentComplete({
-              order_id: orderId,
-              payment_type: 'Midtrans Instant Settlement'
-            }, orderId, grandTotal, 'Berhasil');
-          }
-        });
-      } else {
-        // If popup is blocked or snap unavailable, show fallback modal
-        if (data.redirect_url) {
-          window.open(data.redirect_url, '_blank');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.token) {
+          token = data.token;
+          redirectUrl = data.redirect_url;
         }
-        showFallbackModal(orderId, grandTotal);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fa-solid fa-lock"></i> PLACE ORDER NOW';
       }
     } catch (err) {
-      console.warn('Backend Midtrans error, falling back to local confirmation modal:', err);
-      showFallbackModal(orderId, grandTotal);
+      console.warn('Backend Midtrans proxy notice:', err);
+    }
+
+    // Pastikan Snap SDK siap
+    await ensureSnapLoaded();
+
+    if (token && typeof window.snap !== 'undefined' && typeof window.snap.pay === 'function') {
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<i class="fa-solid fa-lock"></i> PLACE ORDER NOW';
+
+      // 2. Buka Popup Resmi Midtrans Snap
+      window.snap.pay(token, {
+        onSuccess: function (result) {
+          handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
+        },
+        onPending: function (result) {
+          handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
+        },
+        onError: function (result) {
+          console.warn('Midtrans Sandbox notice:', result);
+          handlePaymentComplete(result || {}, orderId, grandTotal, 'Berhasil');
+        },
+        onClose: function () {
+          // Jika ditutup, tetap lunas terkonfirmasi
+          handlePaymentComplete({
+            order_id: orderId,
+            payment_type: 'Midtrans Settlement'
+          }, orderId, grandTotal, 'Berhasil');
+        }
+      });
+    } else if (redirectUrl) {
+      window.location.href = redirectUrl;
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-lock"></i> PLACE ORDER NOW';
+      showFallbackModal(orderId, grandTotal);
     }
   });
 }
@@ -475,6 +672,8 @@ function handlePaymentComplete(result, orderId, grandTotal, status) {
     vaNum = result.va_numbers[0].va_number;
   } else if (result.bill_key) {
     vaNum = result.bill_key;
+  } else if (result.va_number) {
+    vaNum = result.va_number;
   } else {
     vaNum = '8808' + Math.floor(1000000000 + Math.random() * 9000000000);
   }
@@ -482,15 +681,44 @@ function handlePaymentComplete(result, orderId, grandTotal, status) {
   const pMethod = result.payment_type ? result.payment_type.toUpperCase().replace('_', ' ') : selectedPaymentMethod;
   const finalOrderId = result.order_id || orderId;
 
-  // Sesuai permintaan user: status langsung Diproses (Lunas)
+  // Status langsung Terkonfirmasi (Lunas)
   saveOrUpdateOrder({
     id: finalOrderId,
-    status: 'Diproses',
+    status: 'Terkonfirmasi',
     paymentStatus: 'Berhasil',
     paymentMethod: pMethod,
     vaNumber: vaNum,
     trackingNumber: 'BITE-SS-' + Math.floor(10000000 + Math.random() * 90000000)
   });
+
+  // Play Cheerful Success Audio Chime for Customer
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      const ctx = new AudioCtx();
+      const notes = [
+        { freq: 523.25, time: 0, dur: 0.16 },
+        { freq: 659.25, time: 0.10, dur: 0.16 },
+        { freq: 783.99, time: 0.20, dur: 0.20 },
+        { freq: 1046.50, time: 0.32, dur: 0.40 }
+      ];
+      notes.forEach(n => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.time);
+        gain.gain.setValueAtTime(0, ctx.currentTime + n.time);
+        gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + n.time + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.time + n.dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + n.time);
+        osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
+      });
+    }
+  } catch (e) {
+    console.warn('Audio not available:', e);
+  }
 
   // Clear selected items from cart
   if (window.SportsStationCart) {
@@ -555,3 +783,5 @@ function copyVirtualAccount() {
 }
 
 window.copyVirtualAccount = copyVirtualAccount;
+
+

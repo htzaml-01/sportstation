@@ -190,9 +190,15 @@ function renderHomeProductShelves() {
 
   let catalog = null;
   try {
+    const rawDel = localStorage.getItem('SportsStationDeletedProducts');
+    const deletedIds = rawDel ? JSON.parse(rawDel) : [];
+
     const raw = localStorage.getItem('SportsStationCatalog');
     if (raw) {
-      catalog = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        catalog = parsed.filter(p => !deletedIds.includes(String(p.id)));
+      }
     }
   } catch (e) {
     console.warn('Could not read SportsStationCatalog from localStorage', e);
@@ -291,7 +297,7 @@ function renderHomeProductShelves() {
     <div class="product-card" data-id="${prod.id}">
       ${getHomeBadgeHtml(prod)}
       <div class="prod-img-box">
-        <img src="${prod.image}" alt="${prod.name}" class="prod-img" loading="lazy" onerror="this.src='Asset/Logo/logo.png'">
+        <img src="${prod.image}" alt="${prod.name}" class="prod-img" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='Asset/Logo/logo.png'">
       </div>
       <div class="prod-info">
         <span class="prod-brand">${prod.brand ? prod.brand.toUpperCase() : 'SPORTS STATION'}</span>
@@ -323,7 +329,7 @@ function renderHomeProductShelves() {
           <div class="product-card sale-card" data-id="${prod.id}">
             <div class="prod-badge-sale">SALE ${discText}</div>
             <div class="prod-img-box">
-              <img src="${prod.image}" alt="${prod.name}" class="prod-img" loading="lazy" onerror="this.src='Asset/Logo/logo.png'">
+              <img src="${prod.image}" alt="${prod.name}" class="prod-img" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='Asset/Logo/logo.png'">
             </div>
             <div class="prod-info">
               <h4 class="prod-name">${prod.name}</h4>
@@ -485,28 +491,35 @@ function initPosterCarousel() {
 function initHeaderAndScrollTop() {
   const header = document.getElementById('mainHeader');
   const scrollTopBtn = document.getElementById('scrollTopBtn');
+  let ticking = false;
 
   window.addEventListener('scroll', () => {
-    const scrollY = window.scrollY;
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
 
-    // Header shadow on scroll
-    if (header) {
-      if (scrollY > 20) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-    }
+        // Header shadow on scroll
+        if (header) {
+          if (scrollY > 20) {
+            header.classList.add('scrolled');
+          } else {
+            header.classList.remove('scrolled');
+          }
+        }
 
-    // Scroll to Top visibility
-    if (scrollTopBtn) {
-      if (scrollY > 350) {
-        scrollTopBtn.classList.add('visible');
-      } else {
-        scrollTopBtn.classList.remove('visible');
-      }
+        // Scroll to Top visibility
+        if (scrollTopBtn) {
+          if (scrollY > 350) {
+            scrollTopBtn.classList.add('visible');
+          } else {
+            scrollTopBtn.classList.remove('visible');
+          }
+        }
+        ticking = false;
+      });
+      ticking = true;
     }
-  });
+  }, { passive: true });
 
   if (scrollTopBtn) {
     scrollTopBtn.addEventListener('click', () => {
@@ -524,26 +537,97 @@ function initMobileDrawer() {
   const drawerClose = document.getElementById('drawerClose');
   const drawerOverlay = document.getElementById('drawerOverlay');
 
+  if (!mobileDrawer) return;
+
   function openDrawer() {
     mobileDrawer.classList.add('open');
-    drawerOverlay.classList.add('active');
+    if (drawerOverlay) drawerOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
   }
 
   function closeDrawer() {
     mobileDrawer.classList.remove('open');
-    drawerOverlay.classList.remove('active');
+    document.querySelectorAll('.drawer-subview').forEach(s => s.classList.remove('active'));
+    if (drawerOverlay) drawerOverlay.classList.remove('active');
     document.body.style.overflow = '';
   }
 
-  if (mobileToggle) mobileToggle.addEventListener('click', openDrawer);
-  if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
-  if (drawerOverlay) drawerOverlay.addEventListener('click', closeDrawer);
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  }
 
-  const drawerLinks = document.querySelectorAll('.drawer-links a');
+  if (drawerClose) {
+    drawerClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeDrawer();
+    });
+  }
+
+  if (drawerOverlay) {
+    drawerOverlay.addEventListener('click', closeDrawer);
+  }
+
+  // Subview open buttons (BRANDS, SPORTS, MEN, WOMEN, KIDS, EQUIPMENT)
+  document.querySelectorAll('.drawer-link-btn[data-subview]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-subview') || btn.dataset.subview;
+      if (targetId) {
+        const subview = document.getElementById(targetId);
+        if (subview) {
+          subview.classList.add('active');
+        }
+      }
+    });
+  });
+
+  // Subview back buttons
+  document.querySelectorAll('.drawer-back-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const subview = btn.closest('.drawer-subview');
+      if (subview) {
+        subview.classList.remove('active');
+      }
+    });
+  });
+
+  // Close buttons inside subviews
+  document.querySelectorAll('.drawer-sub-close').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDrawer();
+    });
+  });
+
+  // Accordion toggle behavior for A-B, C-E, F-K, FOOTWEAR, CLOTHING, etc.
+  document.querySelectorAll('.brand-acc-header, .drawer-acc-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const group = header.closest('.brand-acc-group, .drawer-acc-group');
+      if (group) {
+        group.classList.toggle('active');
+      }
+    });
+  });
+
+  const drawerLinks = document.querySelectorAll('.drawer-links a, .brand-item-link, .drawer-sub-link');
   drawerLinks.forEach((link) => {
     link.addEventListener('click', closeDrawer);
   });
+
+  window.openMobileBrandDrawer = function() {
+    openDrawer();
+    const brandsSubview = document.getElementById('drawerSubBrands');
+    if (brandsSubview) brandsSubview.classList.add('active');
+  };
 }
 
 /* ==========================================================================
@@ -581,44 +665,47 @@ function initInteractiveCartAndChat() {
 /**
  * Toast Notification Helper
  */
-function showToast(message) {
+function showToast(message, type = 'success') {
+  if (window.SportsStationAuth && typeof window.SportsStationAuth.showToast === 'function') {
+    window.SportsStationAuth.showToast(message, type);
+    return;
+  }
   let toast = document.querySelector('.sports-toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.className = 'sports-toast';
     document.body.appendChild(toast);
-
-    // Dynamic toast styles
-    Object.assign(toast.style, {
-      position: 'fixed',
-      bottom: '150px',
-      right: '24px',
-      backgroundColor: '#1f2937',
-      color: '#ffffff',
-      padding: '12px 20px',
-      borderRadius: '8px',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-      fontSize: '13px',
-      fontWeight: '600',
-      zIndex: '10000',
-      opacity: '0',
-      transform: 'translateY(10px)',
-      transition: 'all 0.3s ease',
-      pointerEvents: 'none',
-      borderLeft: '4px solid #f26522',
-      maxWidth: '320px'
-    });
   }
 
-  toast.textContent = message;
-  toast.style.opacity = '1';
-  toast.style.transform = 'translateY(0)';
+  let cleanMsg = String(message || '').replace(/^[✅🎉⚠️❌ℹ️🏷️✨\s]+/, '').trim();
+  if (!cleanMsg) cleanMsg = 'Success';
+
+  let iconClass = 'fa-solid fa-circle-check';
+  let iconColor = '#22c55e';
+  toast.className = 'sports-toast';
+
+  const lower = String(message || '').toLowerCase();
+  if (type === 'error' || lower.includes('gagal') || lower.includes('habis') || lower.includes('batal') || lower.includes('belum')) {
+    iconClass = 'fa-solid fa-circle-xmark';
+    iconColor = '#ef4444';
+    toast.classList.add('toast-error');
+  } else if (type === 'warning' || lower.includes('peringatan') || lower.includes('harap') || lower.includes('wajib')) {
+    iconClass = 'fa-solid fa-triangle-exclamation';
+    iconColor = '#f59e0b';
+    toast.classList.add('toast-warning');
+  }
+
+  toast.innerHTML = `
+    <i class="${iconClass} sports-toast-icon" style="color: ${iconColor};"></i>
+    <span class="sports-toast-text">${cleanMsg}</span>
+  `;
+
+  toast.classList.add('show');
 
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
-  }, 3000);
+    toast.classList.remove('show');
+  }, 2800);
 }
 
 /**

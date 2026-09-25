@@ -16,15 +16,117 @@ let productSearchTerm = '';
 let productCategoryFilter = '';
 let productBrandFilter = '';
 let productStockFilter = '';
+let currentInvoiceOrder = null;
+
+// Sound Notification State
+let isSoundEnabled = localStorage.getItem('SportsStationAdminSound') !== 'false';
+let knownOrderIds = new Set();
+let isInitialOrderLoad = true;
+
+/**
+ * Web Audio API Synthesizer - Real-time Chime Notification
+ */
+function playOrderNotificationSound() {
+  if (!isSoundEnabled) return;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+
+    // 4-note cheerful POS cashier / marketplace bell chime: C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
+    const notes = [
+      { freq: 523.25, time: 0, dur: 0.16 },
+      { freq: 659.25, time: 0.10, dur: 0.16 },
+      { freq: 783.99, time: 0.20, dur: 0.20 },
+      { freq: 1046.50, time: 0.32, dur: 0.40 }
+    ];
+
+    notes.forEach(n => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(n.freq, ctx.currentTime + n.time);
+
+      gain.gain.setValueAtTime(0, ctx.currentTime + n.time);
+      gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + n.time + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.time + n.dur);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + n.time);
+      osc.stop(ctx.currentTime + n.time + n.dur + 0.05);
+    });
+  } catch (err) {
+    console.warn('Audio play failed:', err);
+  }
+}
+
+function toggleAdminSound() {
+  isSoundEnabled = !isSoundEnabled;
+  localStorage.setItem('SportsStationAdminSound', isSoundEnabled ? 'true' : 'false');
+  updateSoundUI();
+  if (isSoundEnabled) {
+    playOrderNotificationSound();
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.showToast('🔔 Suara notifikasi pesanan masuk: DIAKTIFKAN');
+    }
+  } else {
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.showToast('🔕 Suara notifikasi pesanan masuk: DINONAKTIFKAN');
+    }
+  }
+}
+
+function testAdminSound() {
+  playOrderNotificationSound();
+  if (window.SportsStationAuth) {
+    window.SportsStationAuth.showToast('🔊 Memutar nada tes notifikasi pesanan masuk...');
+  }
+}
+
+function updateSoundUI() {
+  const btn = document.getElementById('adminSoundToggleBtn');
+  const icon = document.getElementById('adminSoundIcon');
+  const label = document.getElementById('adminSoundLabel');
+  if (!btn || !icon || !label) return;
+
+  if (isSoundEnabled) {
+    btn.style.background = '#fff7ed';
+    btn.style.borderColor = '#fdba74';
+    btn.style.color = '#c2410c';
+    icon.className = 'fa-solid fa-bell';
+    label.textContent = 'Suara: Aktif';
+  } else {
+    btn.style.background = '#f1f5f9';
+    btn.style.borderColor = '#cbd5e1';
+    btn.style.color = '#64748b';
+    icon.className = 'fa-solid fa-bell-slash';
+    label.textContent = 'Suara: Mute';
+  }
+}
+
+window.toggleAdminSound = toggleAdminSound;
+window.testAdminSound = testAdminSound;
 
 function initAdminDashboard() {
   checkAdminAuth();
   setupSidebarNavigation();
   updateDatabaseStatusUI();
+  updateSoundUI();
   refreshAdminData();
   setupProductFilters();
   setupModals();
   setupLiveSync();
+
+  // Polling sinkronisasi data pesanan secara halus tiap 2.5 detik
+  setInterval(() => {
+    loadOrdersFromStorage();
+    renderSalesOverview();
+    renderRecentOrdersOverview();
+    renderOrdersTable();
+    renderFinancialLedger();
+  }, 2500);
 
   // Jika Supabase terhubung, sinkronkan data cloud secara asinkron
   if (window.SportsStationDB && window.SportsStationDB.isConfigured()) {
@@ -162,6 +264,8 @@ window.refreshAdminData = refreshAdminData;
 function setupLiveSync() {
   // Real-time synchronization across browser tabs and same-window actions
   window.addEventListener('storage', (e) => {
+    // Abaikan event sintetis dari window sendiri untuk mencegah re-entry loop saat saveCatalogToStorage
+    if (e && e.isTrusted === false) return;
     if (!e.key || e.key === 'SportsStationOrders' || e.key === 'SportsStationCatalog') {
       refreshAdminData();
     }
@@ -178,31 +282,14 @@ function setupLiveSync() {
  * 1. Admin Auth Guard
  */
 function checkAdminAuth() {
-  if (window.SportsStationAuth) {
-    const user = window.SportsStationAuth.getUser();
-    if (!user || user.role !== 'admin') {
-      // Auto-promote or allow demo testing if opened directly
-      console.warn('Current user is not admin. Auto-authenticating admin session for development.');
-      const adminUser = {
-        name: 'Administrator',
-        email: 'admin@sportsstation.id',
-        role: 'admin',
-        memberId: 'SS-ADMIN-01',
-        isLoggedIn: true
-      };
-      localStorage.setItem('sportsstation_user', JSON.stringify(adminUser));
-    }
-  }
+  // Mark admin session in sessionStorage so it doesn't overwrite customer profile in localStorage
+  sessionStorage.setItem('sportsstation_admin_logged', 'true');
 
   // Bind Logout Button
   const logoutBtn = document.getElementById('adminLogoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-      if (window.SportsStationAuth) {
-        window.SportsStationAuth.logout();
-      } else {
-        localStorage.removeItem('sportsstation_user');
-      }
+      sessionStorage.removeItem('sportsstation_admin_logged');
       window.location.href = 'login.html';
     });
   }
@@ -245,7 +332,24 @@ function loadOrdersFromStorage() {
     const raw = localStorage.getItem('SportsStationOrders');
     if (raw) {
       const parsed = JSON.parse(raw);
-      ordersData = Array.isArray(parsed) ? parsed : [];
+      const newOrders = Array.isArray(parsed) ? parsed : [];
+
+      // Deteksi adanya orderan baru yang masuk untuk memutar bunyi notifikasi
+      if (!isInitialOrderLoad && knownOrderIds.size > 0) {
+        const newlyAdded = newOrders.filter(o => !knownOrderIds.has(o.id));
+        if (newlyAdded.length > 0) {
+          playOrderNotificationSound();
+          const first = newlyAdded[0];
+          const custName = first.customer ? first.customer.name : 'Pelanggan';
+          if (window.SportsStationAuth) {
+            window.SportsStationAuth.showToast(`🔔 Pesanan Baru Masuk! ${first.id} (${formatRupiah(first.total)}) dari ${custName}`);
+          }
+        }
+      }
+
+      ordersData = newOrders;
+      knownOrderIds = new Set(ordersData.map(o => o.id));
+      isInitialOrderLoad = false;
     } else {
       ordersData = [];
     }
@@ -324,7 +428,11 @@ function renderSalesOverview() {
       categoryCounts[cat] = (categoryCounts[cat] || 0) + q;
     });
 
-    if (ord.status === 'Diproses' || ord.status === 'Menunggu Pembayaran') {
+    // Pesanan yang perlu diproses / dipersiapkan di warehouse:
+    // Status Terkonfirmasi (Sudah Bayar), Diproses, Menunggu Pembayaran, Baru, atau status yang belum selesai/dibatalkan
+    const statusLower = (ord.status || '').toLowerCase();
+    const isCompletedOrCancelled = statusLower.includes('selesai') || statusLower.includes('batal');
+    if (!isCompletedOrCancelled) {
       pendingProcessingCount++;
     }
 
@@ -346,7 +454,12 @@ function renderSalesOverview() {
   if (ordEl) ordEl.textContent = ordersData.length + ' Pesanan';
   if (pendingEl) pendingEl.textContent = pendingProcessingCount + ' Perlu Diproses';
   if (soldEl) soldEl.textContent = totalUnitsSold + ' Pasang';
-  if (badgeOrdEl) badgeOrdEl.textContent = pendingProcessingCount;
+  
+  // Update badge di sidebar menu "Proses Pesanan"
+  if (badgeOrdEl) {
+    badgeOrdEl.textContent = pendingProcessingCount;
+    badgeOrdEl.style.display = pendingProcessingCount > 0 ? 'inline-flex' : 'none';
+  }
 
   // Best seller & trend text
   let bestSellerName = '-';
@@ -486,9 +599,14 @@ function renderRecentOrdersOverview() {
           </span>
         </td>
         <td>
-          <button class="admin-btn-action" onclick="document.querySelector('[data-view=orders]').click();" title="Buka Detail di Proses Pesanan">
-            <i class="fa-solid fa-arrow-right"></i> Proses
-          </button>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button class="admin-btn-action" onclick="openInvoiceModal('${ord.id}')" title="Cetak &amp; Download Invoice" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;">
+              <i class="fa-solid fa-receipt"></i> Invoice
+            </button>
+            <button class="admin-btn-action" onclick="document.querySelector('[data-view=orders]').click();" title="Buka Detail di Proses Pesanan">
+              <i class="fa-solid fa-arrow-right"></i> Proses
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -524,11 +642,12 @@ function renderOrdersTable() {
   }
 
   let filtered = ordersData.filter(ord => {
+    const s = (ord.status || '').toLowerCase();
     if (currentOrderFilter === 'semua') return true;
-    if (currentOrderFilter === 'menunggu-pembayaran') return ord.status.toLowerCase().includes('menunggu');
-    if (currentOrderFilter === 'diproses') return ord.status.toLowerCase().includes('proses');
-    if (currentOrderFilter === 'dikirim') return ord.status.toLowerCase().includes('kirim');
-    if (currentOrderFilter === 'selesai') return ord.status.toLowerCase().includes('selesai');
+    if (currentOrderFilter === 'terkonfirmasi') return s.includes('terkonfirmasi') || s.includes('konfirmasi') || s.includes('proses');
+    if (currentOrderFilter === 'dikirim') return s.includes('kirim');
+    if (currentOrderFilter === 'selesai') return s.includes('selesai');
+    if (currentOrderFilter === 'dibatalkan') return s.includes('batal');
     return true;
   });
 
@@ -558,6 +677,7 @@ function renderOrdersTable() {
     const custName = ord.customer ? ord.customer.name : 'Pelanggan';
     const custPhone = ord.customer ? ord.customer.phone : '-';
     const itemsSummary = (ord.items || []).map(i => `${i.name} (x${i.qty})`).join(', ');
+    const isHandoverReady = ord.status === 'Terkonfirmasi' || ord.status === 'Diproses';
 
     return `
       <tr>
@@ -588,16 +708,23 @@ function renderOrdersTable() {
           </span>
         </td>
         <td>
-          <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            ${isHandoverReady ? `
+              <button class="admin-btn-handover" onclick="handoverToCourier('${ord.id}')" title="Kirim Paket Langsung ke Kurir">
+                <i class="fa-solid fa-truck-fast"></i> Kirim Langsung
+              </button>
+            ` : ''}
             <select class="admin-action-select" onchange="updateOrderStatus('${ord.id}', this.value)" title="Ubah Status Pesanan">
-              <option value="Menunggu Pembayaran" ${ord.status === 'Menunggu Pembayaran' ? 'selected' : ''}>Menunggu Pembayaran</option>
-              <option value="Diproses" ${ord.status === 'Diproses' ? 'selected' : ''}>Diproses (Jakarta HQ)</option>
-              <option value="Dikirim" ${ord.status === 'Dikirim' ? 'selected' : ''}>Dikirim (Biteship/Kurir)</option>
-              <option value="Selesai" ${ord.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+              <option value="Terkonfirmasi" ${ord.status === 'Terkonfirmasi' ? 'selected' : ''}>Terkonfirmasi (Sudah Bayar)</option>
+              <option value="Dikirim" ${ord.status === 'Dikirim' ? 'selected' : ''}>Dikirim (Kurir)</option>
               <option value="Dibatalkan" ${ord.status === 'Dibatalkan' ? 'selected' : ''}>Dibatalkan</option>
+              ${ord.status === 'Selesai' ? '<option value="Selesai" selected disabled>Selesai (Diterima Customer)</option>' : ''}
             </select>
             <button class="admin-btn-action" onclick="openOrderDetailModal('${ord.id}')" title="Lihat Rincian Pesanan">
               <i class="fa-solid fa-eye"></i> Detail
+            </button>
+            <button class="admin-btn-action" onclick="openInvoiceModal('${ord.id}')" title="Cetak / Download Invoice" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;">
+              <i class="fa-solid fa-receipt"></i> Invoice
             </button>
           </div>
         </td>
@@ -609,6 +736,12 @@ function renderOrdersTable() {
 function updateOrderStatus(orderId, newStatus) {
   const order = ordersData.find(o => o.id === orderId);
   if (!order) return;
+
+  if (newStatus === 'Selesai') {
+    alert('Hanya pembeli/pelanggan yang berhak menyelesaikan pesanan setelah mereka menerima paket.');
+    renderOrdersTable();
+    return;
+  }
 
   order.status = newStatus;
   
@@ -628,6 +761,53 @@ function updateOrderStatus(orderId, newStatus) {
 
   if (window.SportsStationAuth) {
     window.SportsStationAuth.showToast(`Status pesanan ${orderId} berhasil diubah ke: ${newStatus}`);
+  }
+}
+
+function handoverToCourier(orderId) {
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+
+  // Auto-generate resi resmi jika belum ada
+  if (!order.trackingNumber || order.trackingNumber === '-' || order.trackingNumber.startsWith('SS-ORD-') || order.trackingNumber.startsWith('BITE-SS-')) {
+    const courierCode = (order.courier || 'JNE').split(' ')[0].replace(/[^a-zA-Z]/g, '').toUpperCase() || 'JNE';
+    order.trackingNumber = `BITE-${courierCode}-${Math.floor(10000000 + Math.random() * 90000000)}`;
+  }
+
+  order.status = 'Dikirim';
+  order.shippedAt = new Date().toISOString();
+  order.shippedDisplayDate = new Date().toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Hitung estimasi waktu sampai kurir (default 2-3 hari)
+  let estDays = 2;
+  const cName = (order.courier || '').toLowerCase();
+  if (cName.includes('1-2')) estDays = 2;
+  else if (cName.includes('2-3')) estDays = 3;
+  else if (cName.includes('3-5')) estDays = 4;
+  else if (cName.includes('same day') || cName.includes('instant')) estDays = 1;
+
+  const estDate = new Date(Date.now() + estDays * 24 * 60 * 60 * 1000);
+  order.estimatedDeliveryDate = estDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  order.estimatedDeliveryTimestamp = estDate.getTime();
+
+  saveOrdersToStorage();
+  if (window.SportsStationDB) {
+    window.SportsStationDB.updateOrderStatus(orderId, 'Dikirim');
+  }
+
+  renderSalesOverview();
+  renderRecentOrdersOverview();
+  renderOrdersTable();
+  renderFinancialLedger();
+
+  if (window.SportsStationAuth) {
+    window.SportsStationAuth.showToast(`🚚 Paket pesanan ${orderId} telah diserahkan ke ${order.courier || 'Kurir'}! Nomor Resi: ${order.trackingNumber}`);
   }
 }
 
@@ -694,7 +874,7 @@ function renderFinancialLedger() {
           </span>
         </td>
         <td>
-          <button class="admin-btn-action" onclick="printInvoice('${ord.id}')">
+          <button class="admin-btn-action" onclick="openInvoiceModal('${ord.id}')" title="Cetak / Unduh Invoice" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;">
             <i class="fa-solid fa-receipt"></i> Invoice
           </button>
         </td>
@@ -704,7 +884,7 @@ function renderFinancialLedger() {
 }
 
 /**
- * 7. Order Details Modal & Invoice
+ * 7. Order Details Modal & Invoice System
  */
 function setupModals() {
   const detailModal = document.getElementById('adminDetailModal');
@@ -758,116 +938,263 @@ function openOrderDetailModal(orderId) {
   }
 
   document.getElementById('modalDetailTotal').textContent = formatRupiah(order.total);
+
+  const handoverBtn = document.getElementById('modalDetailHandoverBtn');
+  if (handoverBtn) {
+    if (order.status === 'Terkonfirmasi' || order.status === 'Diproses') {
+      handoverBtn.style.display = 'inline-flex';
+      handoverBtn.onclick = () => {
+        handoverToCourier(order.id);
+        modal.style.display = 'none';
+      };
+    } else {
+      handoverBtn.style.display = 'none';
+      handoverBtn.onclick = null;
+    }
+  }
+
+  const invoiceBtn = document.getElementById('modalDetailInvoiceBtn');
+  if (invoiceBtn) {
+    invoiceBtn.onclick = () => openInvoiceModal(order.id);
+  }
+
   modal.style.display = 'flex';
 }
 
-function printInvoice(orderId) {
-  const order = ordersData.find(o => o.id === orderId);
-  if (!order) return;
-
-  const printWindow = window.open('', '_blank', 'width=800,height=700');
-  if (!printWindow) {
-    alert('Popup diblokir browser. Harap izinkan popup.');
-    return;
-  }
-
-  const itemsHtml = (order.items || []).map(it => `
+/**
+ * GENERATE OFFICIAL INVOICE HTML
+ */
+function buildInvoiceHtml(order) {
+  const subtotal = (order.total || 0) - (order.shippingFee || order.courierPrice || 0);
+  const itemsRows = (order.items || []).map((it, idx) => `
     <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eee;">${it.name} (${it.size ? 'Size ' + it.size : ''})</td>
-      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${it.qty}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRupiah(it.price)}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatRupiah(it.price * it.qty)}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: center; color: #64748b;">${idx + 1}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
+        <strong style="color: #0f172a; font-size: 13px;">${it.name}</strong>
+        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Ukuran: <strong>${it.size || 'All Size'}</strong> &bull; SKU: SS-${it.id || 'ITEM'}</div>
+      </td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 13px;">${it.qty}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 13px;">${formatRupiah(it.price)}</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 13px; font-weight: 600; color: #0f172a;">${formatRupiah(it.price * it.qty)}</td>
     </tr>
   `).join('');
 
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>INVOICE ${order.id} - SPORTS STATION</title>
-      <style>
-        body { font-family: 'Inter', Arial, sans-serif; padding: 40px; color: #0f172a; line-height: 1.5; }
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f95a00; padding-bottom: 16px; margin-bottom: 24px; }
-        .logo { font-size: 24px; font-weight: 800; color: #f95a00; font-family: 'Montserrat', sans-serif; }
-        .invoice-title { font-size: 20px; font-weight: 700; text-align: right; }
-        table { width: 100%; border-collapse: collapse; margin: 24px 0; }
-        th { background: #f8fafc; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
-        .totals { margin-left: auto; width: 300px; }
-        .total-row { display: flex; justify-content: space-between; padding: 6px 0; }
-        .grand-total { font-size: 18px; font-weight: 800; border-top: 2px solid #0f172a; padding-top: 10px; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
+  return `
+    <div class="invoice-card-paper">
+      <!-- Kop Header -->
+      <div class="invoice-header-row">
         <div>
-          <div class="logo">SPORTS STATION</div>
-          <div style="font-size: 12px; color: #64748b;">Central Warehouse &amp; Operations: Sahid Sudirman Center, Jakarta Pusat</div>
-        </div>
-        <div>
-          <div class="invoice-title">OFFICIAL INVOICE</div>
-          <div style="font-size: 13px; color: #64748b;">Nomor: <strong>${order.id}</strong></div>
-          <div style="font-size: 12px; color: #64748b;">Tanggal: ${order.displayDate || order.date}</div>
-        </div>
-      </div>
-
-      <div style="display: flex; justify-content: space-between; margin-bottom: 24px; font-size: 13px;">
-        <div>
-          <strong>Tujuan Pengiriman:</strong><br>
-          ${order.customer ? order.customer.name : 'Pelanggan'}<br>
-          ${order.customer ? order.customer.phone : '-'}<br>
-          ${order.customer ? order.customer.address : '-'}
+          <img src="Asset/Logo/logo.png" alt="Sports Station" class="invoice-brand-logo" onerror="this.src='Asset/Logo/logo.png'">
+          <div class="invoice-company-info">
+            <strong>PT MAP AKTIF ADIPERKASA TBK (SPORTS STATION)</strong><br>
+            Central Fulfillment &amp; Operations: Sahid Sudirman Center Lt. 28, Jakarta Pusat 10220<br>
+            Email: customer@sportsstation.id &bull; Hotline: 1500-777
+          </div>
         </div>
         <div style="text-align: right;">
-          <strong>Kurir &amp; Pembayaran:</strong><br>
-          Ekspedisi: ${order.courier || 'JNE Reguler'}<br>
-          No. Resi: ${order.trackingNumber || '-'}<br>
-          Metode Bayar: ${order.paymentMethod || 'Midtrans Gateway'}<br>
-          Status: <strong style="color: #16a34a;">PAID (LUNAS)</strong>
+          <h2 class="invoice-main-title">FAKTUR PENJUALAN</h2>
+          <div style="font-size: 12.5px; color: #64748b; margin-bottom: 6px;">No. Invoice: <strong style="color: #0f172a; font-family: monospace;">INV/SS/${order.id.replace('SS-ORD-', '')}</strong></div>
+          <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">Tanggal: <strong>${order.displayDate || order.date}</strong></div>
+          <div><span class="invoice-status-stamp"><i class="fa-solid fa-circle-check"></i> LUNAS / PAID</span></div>
         </div>
       </div>
 
-      <table>
+      <!-- Info Box -->
+      <div class="invoice-details-grid">
+        <div class="invoice-details-col">
+          <h4><i class="fa-solid fa-user" style="color: #f95a00;"></i> Informasi Pembeli / Penerima</h4>
+          <div style="font-weight: 700; color: #0f172a; font-size: 13.5px; margin-bottom: 2px;">${order.customer ? order.customer.name : 'Pelanggan'}</div>
+          <div style="color: #475569; margin-bottom: 4px;"><i class="fa-solid fa-phone" style="font-size: 10px;"></i> ${order.customer ? order.customer.phone : '-'} &bull; ${order.customer ? order.customer.email : '-'}</div>
+          <div style="color: #334155; line-height: 1.4;"><i class="fa-solid fa-location-dot" style="font-size: 10px;"></i> ${order.customer ? order.customer.address : '-'}</div>
+        </div>
+        <div class="invoice-details-col">
+          <h4><i class="fa-solid fa-truck" style="color: #2563eb;"></i> Pengiriman &amp; Pembayaran</h4>
+          <div>Ekspedisi: <strong>${order.courier || 'JNE Reguler'}</strong></div>
+          <div>Nomor Resi: <strong style="font-family: monospace; color: #2563eb;">${order.trackingNumber || '-'}</strong></div>
+          <div>Metode Bayar: <strong>${order.paymentMethod || 'Midtrans Payment Gateway'}</strong></div>
+          <div>Nomor Transaksi/VA: <strong style="font-family: monospace;">${order.vaNumber || order.id}</strong></div>
+        </div>
+      </div>
+
+      <!-- Table of items -->
+      <table class="invoice-table">
         <thead>
           <tr>
-            <th>Deskripsi Produk</th>
-            <th style="text-align: center;">Qty</th>
-            <th style="text-align: right;">Harga Satuan</th>
-            <th style="text-align: right;">Subtotal</th>
+            <th style="width: 40px; text-align: center;">No</th>
+            <th>Rincian Produk</th>
+            <th style="width: 60px; text-align: center;">Qty</th>
+            <th style="width: 140px; text-align: right;">Harga Satuan</th>
+            <th style="width: 150px; text-align: right;">Jumlah (Rp)</th>
           </tr>
         </thead>
         <tbody>
-          ${itemsHtml}
+          ${itemsRows}
         </tbody>
       </table>
 
-      <div class="totals">
-        <div class="total-row">
-          <span>Subtotal Produk:</span>
-          <span>${formatRupiah((order.total || 0) - (order.shippingFee || order.courierPrice || 0))}</span>
-        </div>
-        <div class="total-row">
-          <span>Ongkos Kirim:</span>
-          <span>${formatRupiah(order.shippingFee || order.courierPrice || 12000)}</span>
-        </div>
-        <div class="total-row grand-total">
-          <span>Total Tagihan:</span>
-          <span>${formatRupiah(order.total)}</span>
+      <!-- Calculations -->
+      <div class="invoice-calc-box">
+        <div class="invoice-calc-table">
+          <div class="invoice-calc-row">
+            <span>Subtotal Produk:</span>
+            <strong>${formatRupiah(subtotal)}</strong>
+          </div>
+          <div class="invoice-calc-row">
+            <span>Biaya Pengiriman (Biteship):</span>
+            <strong>${formatRupiah(order.shippingFee || order.courierPrice || 0)}</strong>
+          </div>
+          <div class="invoice-calc-row total-row">
+            <span>TOTAL PEMBAYARAN:</span>
+            <span style="color: #f95a00;">${formatRupiah(order.total)}</span>
+          </div>
         </div>
       </div>
 
-      <div style="margin-top: 50px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #eee; padding-top: 16px;">
-        Terima kasih telah berbelanja di Sports Station Official Indonesia.<br>
-        Dokumen ini diterbitkan otomatis oleh Sports Station Central Management System.
+      <!-- Footer -->
+      <div class="invoice-footer-note">
+        <div style="font-weight: 600; color: #475569; margin-bottom: 2px;">
+          ✓ Garansi 100% Produk Original Sports Station Resmi Indonesia
+        </div>
+        Dokumen ini sah dan diterbitkan secara digital oleh Sports Station Central Management System.<br>
+        Terima kasih atas kepercayaan Anda berbelanja perlengkapan olahraga di Sports Station.
       </div>
+    </div>
+  `;
+}
 
+function openInvoiceModal(orderId) {
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+
+  currentInvoiceOrder = order;
+  const modal = document.getElementById('adminInvoiceModal');
+  const content = document.getElementById('invoiceModalContent');
+
+  if (modal && content) {
+    content.innerHTML = buildInvoiceHtml(order);
+    modal.style.display = 'flex';
+  }
+}
+
+function closeInvoiceModal() {
+  const modal = document.getElementById('adminInvoiceModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function printCurrentInvoice() {
+  if (!currentInvoiceOrder) return;
+  const printWindow = window.open('', '_blank', 'width=880,height=900');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  const invoiceHtml = buildInvoiceHtml(currentInvoiceOrder);
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <title>INVOICE_${currentInvoiceOrder.id}_SPORTS_STATION</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+      <style>
+        body { font-family: 'Inter', sans-serif; padding: 36px; background: #fff; color: #0f172a; margin: 0; }
+        .invoice-card-paper { width: 100%; max-width: 800px; margin: 0 auto; }
+        .invoice-header-row { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #f95a00; padding-bottom: 18px; margin-bottom: 20px; }
+        .invoice-brand-logo { height: 36px; margin-bottom: 6px; }
+        .invoice-company-info { font-size: 11.5px; color: #64748b; line-height: 1.4; }
+        .invoice-main-title { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin: 0 0 4px; font-family: 'Montserrat', sans-serif; }
+        .invoice-status-stamp { display: inline-block; background-color: #dcfce7; color: #15803d; border: 1.5px solid #86efac; padding: 3px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; }
+        .invoice-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 12.5px; }
+        .invoice-details-col h4 { margin: 0 0 6px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+        .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .invoice-table th { background-color: #f1f5f9; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 10px 12px; text-align: left; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #cbd5e1; }
+        .invoice-table td { padding: 10px 12px; font-size: 12.5px; border-bottom: 1px solid #f1f5f9; }
+        .invoice-calc-box { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+        .invoice-calc-table { width: 320px; }
+        .invoice-calc-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12.5px; color: #475569; }
+        .invoice-calc-row.total-row { border-top: 2px solid #0f172a; margin-top: 6px; padding-top: 10px; font-size: 16px; font-weight: 800; color: #0f172a; }
+        .invoice-footer-note { border-top: 1px dashed #cbd5e1; padding-top: 16px; text-align: center; font-size: 11px; color: #94a3b8; }
+        @media print {
+          body { padding: 0; }
+        }
+      </style>
+    </head>
+    <body>
+      ${invoiceHtml}
       <script>
-        window.onload = function() { window.print(); };
+        window.onload = function() {
+          window.print();
+        };
       </script>
     </body>
     </html>
   `);
   printWindow.document.close();
 }
+
+function downloadCurrentInvoice() {
+  if (!currentInvoiceOrder) return;
+  const invoiceHtml = buildInvoiceHtml(currentInvoiceOrder);
+  const fullHtml = `
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice ${currentInvoiceOrder.id} - Sports Station</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; padding: 36px; background: #f8fafc; color: #0f172a; margin: 0; display: flex; justify-content: center; }
+    .invoice-card-paper { width: 100%; max-width: 800px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .invoice-header-row { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #f95a00; padding-bottom: 18px; margin-bottom: 20px; }
+    .invoice-brand-logo { height: 36px; margin-bottom: 6px; }
+    .invoice-company-info { font-size: 11.5px; color: #64748b; line-height: 1.4; }
+    .invoice-main-title { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; margin: 0 0 4px; font-family: 'Montserrat', sans-serif; }
+    .invoice-status-stamp { display: inline-block; background-color: #dcfce7; color: #15803d; border: 1.5px solid #86efac; padding: 3px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; }
+    .invoice-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-size: 12.5px; }
+    .invoice-details-col h4 { margin: 0 0 6px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+    .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .invoice-table th { background-color: #f1f5f9; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 10px 12px; text-align: left; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #cbd5e1; }
+    .invoice-table td { padding: 10px 12px; font-size: 12.5px; border-bottom: 1px solid #f1f5f9; }
+    .invoice-calc-box { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+    .invoice-calc-table { width: 320px; }
+    .invoice-calc-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12.5px; color: #475569; }
+    .invoice-calc-row.total-row { border-top: 2px solid #0f172a; margin-top: 6px; padding-top: 10px; font-size: 16px; font-weight: 800; color: #0f172a; }
+    .invoice-footer-note { border-top: 1px dashed #cbd5e1; padding-top: 16px; text-align: center; font-size: 11px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  ${invoiceHtml}
+</body>
+</html>
+  `;
+
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Invoice_${currentInvoiceOrder.id}_SportsStation.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  if (window.SportsStationAuth) {
+    window.SportsStationAuth.showToast(`📄 Invoice ${currentInvoiceOrder.id} berhasil diunduh!`);
+  }
+}
+
+window.openInvoiceModal = openInvoiceModal;
+window.closeInvoiceModal = closeInvoiceModal;
+window.printCurrentInvoice = printCurrentInvoice;
+window.downloadCurrentInvoice = downloadCurrentInvoice;
+window.printInvoice = openInvoiceModal;
 
 /**
  * Helper: Format Rupiah
@@ -879,14 +1206,17 @@ function formatRupiah(num) {
 function getStatusBadgeClass(status) {
   const s = String(status).toLowerCase();
   if (s.includes('menunggu')) return 'status-menunggu-pembayaran';
+  if (s.includes('terkonfirmasi') || s.includes('konfirmasi')) return 'status-terkonfirmasi';
   if (s.includes('proses')) return 'status-diproses';
   if (s.includes('kirim')) return 'status-dikirim';
   if (s.includes('selesai')) return 'status-selesai';
+  if (s.includes('batal')) return 'status-dibatalkan';
   return 'status-diproses';
 }
 
 // Global exposes for inline clicks
 window.updateOrderStatus = updateOrderStatus;
+window.handoverToCourier = handoverToCourier;
 window.openOrderDetailModal = openOrderDetailModal;
 window.printInvoice = printInvoice;
 
@@ -1086,7 +1416,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'BEST SELLER',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/c8a7e9f1-2d3b-4e5f-a6c7-8d9e0f1a2b3c/NIKE+PRO+DRI-FIT+SWOOSH.png'
   },
   {
     id: 'nike-dri-fit-challenger-shorts',
@@ -1102,7 +1432,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/a1b2c3d4-e5f6-7890-abcd-ef1234567890/NIKE+DRI-FIT+CHALLENGER.png'
   },
   {
     id: 'nike-club-fleece-jacket',
@@ -1118,7 +1448,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/b2c3d4e5-f6a7-8901-bcde-f12345678901/NIKE+CLUB+FLEECE+FZ.png'
   },
   {
     id: 'nike-heritage-backpack',
@@ -1134,7 +1464,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/c3d4e5f6-a7b8-9012-cdef-123456789012/NIKE+HERITAGE+BACKPACK.png'
   },
   {
     id: 'nike-everyday-socks-3pack',
@@ -1150,7 +1480,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'BEST SELLER',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/d4e5f6a7-b8c9-0123-defa-234567890123/NIKE+EVERYDAY+SOCKS.png'
   },
 
   // --- 2. SKECHERS ---
@@ -1168,7 +1498,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+NIKE+AIR+ZOOM+PEGASUS+42.avif'
+    image: 'https://img.skechers.com/img/productimages/large/104537_GRY.jpg'
   },
   {
     id: 'skechers-ultra-flex-sandal',
@@ -1184,7 +1514,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+PEGASUS+42+EASYON.avif'
+    image: 'https://img.skechers.com/img/productimages/large/119776_BKW.jpg'
   },
   {
     id: 'skechers-bobs-squad-waves',
@@ -1200,7 +1530,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+NIKE+VOMERO+18.avif'
+    image: 'https://img.skechers.com/img/productimages/large/117379_TPE.jpg'
   },
   {
     id: 'skechers-gowalk-max-men',
@@ -1216,7 +1546,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'BEST SELLER',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+VOMERO+PLUS.avif'
+    image: 'https://img.skechers.com/img/productimages/large/216281_BKW.jpg'
   },
   {
     id: 'skechers-dynamatic-girls',
@@ -1232,7 +1562,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+PEGASUS+42+EASYON.avif'
+    image: 'https://img.skechers.com/img/productimages/large/303560L_BKMT.jpg'
   },
   {
     id: 'skechers-backpack-unisex',
@@ -1248,7 +1578,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://img.skechers.com/img/productimages/large/SKCH7680_CHAR.jpg'
   },
   {
     id: 'skechers-lowcut-socks-3pk',
@@ -1264,7 +1594,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://img.skechers.com/img/productimages/large/S115259_WBK.jpg'
   },
 
   // --- 3. ADIDAS ---
@@ -1282,7 +1612,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+STRUCTURE+PLUS.avif'
+    image: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/832df7895ce244888dc9af3800fe0cf7/Sepatu_Treadmove_Hitam_JI1147_01_standard.jpg'
   },
   {
     id: 'adidas-switch-move-men',
@@ -1298,7 +1628,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/ZOOM+FLY+6.avif'
+    image: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/7f8c0e4c5c3b4a2d9e1f/Sepatu_Switch_Move_Hitam_IF5765_01_standard.jpg'
   },
   {
     id: 'adidas-runfalcon-5-womens',
@@ -1314,7 +1644,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+NIKE+AIR+ZOOM+PEGASUS+42.avif'
+    image: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/a2b3c4d5e6f70819/Sepatu_Runfalcon_5_Hitam_IE8817_01_standard.jpg'
   },
   {
     id: 'adidas-tiro-24-pants',
@@ -1330,7 +1660,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'BEST SELLER',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/d9e8f7a6b5c4d3e2/Celana_Tiro_24_Training_Hitam_IJ9958_21_model.jpg'
   },
   {
     id: 'adidas-essentials-3s-tee',
@@ -1346,7 +1676,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/e1f2a3b4c5d6e7f8/Tee_Katun_Essentials_3-Stripes_Putih_JD9929_01_laydown.jpg'
   },
 
   // --- 4. PUMA ---
@@ -1364,7 +1694,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+VOMERO+PLUS.avif'
+    image: 'https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600/global/378960/01/sv01/fnd/SEA/fmt/png/INTERFLEX-Modern-Running-Shoes'
   },
   {
     id: 'puma-softride-clean-v2',
@@ -1380,7 +1710,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif'
+    image: 'https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600/global/310635/01/sv01/fnd/SEA/fmt/png/Softride-Clean-v2-Running-Shoes'
   },
   {
     id: 'puma-flyer-lite-3',
@@ -1396,7 +1726,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'HOT',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/ZOOM+FLY+6.avif'
+    image: 'https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600/global/379928/02/sv01/fnd/SEA/fmt/png/Flyer-Lite-3-Running-Shoes'
   },
   {
     id: 'puma-classic-logo-tee',
@@ -1412,7 +1742,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600/global/680178/01/sv01/fnd/SEA/fmt/png/Classics-Logo-Tee'
   },
   {
     id: 'puma-tr-sport-bottle',
@@ -1428,7 +1758,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600/global/054156/01/sv01/fnd/SEA/fmt/png/PUMA-TR-Training-Bottle'
   },
 
   // --- 5. NEW BALANCE ---
@@ -1446,7 +1776,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+STRUCTURE+PLUS.avif'
+    image: 'https://nb.scene7.com/is/image/NB/m460lb4_nb_02_i?$pdpflexf2$&qlt=80&wid=600'
   },
   {
     id: 'nb-411-v4-women',
@@ -1462,7 +1792,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+NIKE+VOMERO+18.avif'
+    image: 'https://nb.scene7.com/is/image/NB/w411lg4_nb_02_i?$pdpflexf2$&qlt=80&wid=600'
   },
   {
     id: 'nb-tektrel-trail',
@@ -1478,7 +1808,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif'
+    image: 'https://nb.scene7.com/is/image/NB/mtektrc1_nb_02_i?$pdpflexf2$&qlt=80&wid=600'
   },
 
   // --- 6. REEBOK ---
@@ -1496,7 +1826,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Reebok-Pulse-Core.png'
+    image: 'https://assets.reebok.com/images/w_600,f_auto,q_auto/a1b2c3d4e5f67890abcd/Zig_Dynamica_6_Shoes_Black_HQ2130_01_standard.jpg'
   },
   {
     id: 'reebok-mundo-men',
@@ -1512,7 +1842,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Reebok-Pulse-Core.png'
+    image: 'https://assets.reebok.com/images/w_600,f_auto,q_auto/e6f7a8b9c0d1e2f3abcd/Mundo_Shoes_Black_HQ5678_01_standard.jpg'
   },
   {
     id: 'reebok-court-advance-vulc',
@@ -1528,7 +1858,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Reebok-Pulse-Core.png'
+    image: 'https://assets.reebok.com/images/w_600,f_auto,q_auto/f7a8b9c0d1e2f3a4abcd/Court_Advance_Vulc_Shoes_White_GW5587_01_standard.jpg'
   },
 
   // --- 7. CONVERSE ---
@@ -1546,7 +1876,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+PEGASUS+42+EASYON.avif'
+    image: 'https://www.converse.co.id/media/catalog/product/cache/1/image/600x/A10274.jpg'
   },
   {
     id: 'converse-day-one-court',
@@ -1562,7 +1892,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+STRUCTURE+PLUS.avif'
+    image: 'https://www.converse.co.id/media/catalog/product/cache/1/image/600x/A09829.jpg'
   },
   {
     id: 'converse-kids-go-bag',
@@ -1578,7 +1908,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://www.converse.co.id/media/catalog/product/cache/1/image/600x/10175-A13-01.jpg'
   },
 
   // --- 8. DIADORA ---
@@ -1596,7 +1926,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/diadora-rayna-men-running.jpg'
   },
   {
     id: 'diadora-niles-2-men',
@@ -1612,7 +1942,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'SALE',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/ZOOM+FLY+6.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/diadora-niles-2-men-navy.jpg'
   },
   {
     id: 'diadora-spinta-men',
@@ -1628,7 +1958,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+VOMERO+PLUS+CM.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/diadora-spinta-men-grey.jpg'
   },
 
   // --- 9. ASTEC ---
@@ -1646,7 +1976,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+NIKE+AIR+ZOOM+PEGASUS+42.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/astec-nuclear-women-white.jpg'
   },
   {
     id: 'astec-mythos-womens',
@@ -1662,7 +1992,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Woman/Running/W+NIKE+VOMERO+18.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/astec-mythos-women-blue.jpg'
   },
   {
     id: 'astec-nero-men',
@@ -1678,7 +2008,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'BEST SELLER',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+STRUCTURE+PLUS.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/astec-nero-men-badminton.jpg'
   },
 
   // --- 10. AIRWALK ---
@@ -1696,7 +2026,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+VOMERO+PLUS.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/airwalk-galaxy-men-lifestyle.jpg'
   },
   {
     id: 'airwalk-legian-sandals',
@@ -1712,7 +2042,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif'
+    image: 'https://images.sportsstation.id/cdn-cgi/image/w=600,q=80/img/products/airwalk-legian-sandals-men.jpg'
   },
 
   // --- 11. EQUIPMENT & GEAR (SPALDING, PRINCE, GILDAN) ---
@@ -1730,7 +2060,7 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'BEST SELLER',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://www.spalding.com/dw/image/v2/ABAH_PRD/on/demandware.static/-/Sites-spalding-products/default/tf-150-outdoor-basketball.png?sw=600'
   },
   {
     id: 'prince-tour-team-bag',
@@ -1746,7 +2076,7 @@ const DEFAULT_CATALOG = [
     isSale: true,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
-    image: 'Asset/Logo/logo.png'
+    image: 'https://www.princetennisbags.com/cdn/shop/products/6R907-200_Tour_Team_6Pack_Bag_600x.jpg'
   },
   {
     id: 'gildan-softstyle-tee',
@@ -1762,11 +2092,103 @@ const DEFAULT_CATALOG = [
     isSale: false,
     tag: 'NEW',
     createdAt: new Date().toISOString(),
+    image: 'https://www.gildanindonesia.com/media/catalog/product/cache/image/600x/64000-sport-tee-white.jpg'
+  },
+  // --- 11. ASICS RUNNING ---
+  {
+    id: 'asics-gel-kayano-33',
+    name: 'ASICS GEL-KAYANO 33',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 2799000,
+    originalPrice: 2799000,
+    discount: 0,
+    stock: 44,
+    sizeStock: { '39': 6, '40': 10, '41': 12, '42': 10, '43': 4, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-gel-nimbus-28',
+    name: 'ASICS GEL-NIMBUS 28',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 2699000,
+    originalPrice: 2699000,
+    discount: 0,
+    stock: 40,
+    sizeStock: { '39': 5, '40': 8, '41': 12, '42': 10, '43': 3, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-novablast-6',
+    name: 'ASICS NOVABLAST 6',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 2199000,
+    originalPrice: 2199000,
+    discount: 0,
+    stock: 38,
+    sizeStock: { '39': 4, '40': 8, '41': 12, '42': 8, '43': 4, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-superblast-3',
+    name: 'ASICS SUPERBLAST 3',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 3299000,
+    originalPrice: 3299000,
+    discount: 0,
+    stock: 30,
+    sizeStock: { '40': 6, '41': 10, '42': 8, '43': 4, '44': 2 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
+    image: 'Asset/Logo/logo.png'
+  },
+  {
+    id: 'asics-metaspeed-tokyo-serie',
+    name: 'ASICS METASPEED TOKYO Serie',
+    brand: 'asics',
+    gender: 'men',
+    category: 'running',
+    price: 3899000,
+    originalPrice: 3899000,
+    discount: 0,
+    stock: 25,
+    sizeStock: { '40': 5, '41': 8, '42': 8, '43': 3, '44': 1 },
+    isSale: false,
+    tag: 'NEW',
+    createdAt: new Date().toISOString(),
     image: 'Asset/Logo/logo.png'
   }
 ];
 
+function getDeletedProductIds() {
+  try {
+    const raw = localStorage.getItem('SportsStationDeletedProducts');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 function loadCatalogProducts() {
+  const deletedIds = getDeletedProductIds();
+
   try {
     const raw = localStorage.getItem('SportsStationCatalog');
     if (raw) {
@@ -1777,15 +2199,23 @@ function loadCatalogProducts() {
     catalogProducts = [];
   }
 
+  // Filter keluar produk yang sudah pernah dihapus admin
+  if (Array.isArray(catalogProducts)) {
+    catalogProducts = catalogProducts.filter(p => !deletedIds.includes(String(p.id)));
+  } else {
+    catalogProducts = [];
+  }
+
   if (!catalogProducts || catalogProducts.length === 0) {
-    catalogProducts = [...DEFAULT_CATALOG];
+    catalogProducts = DEFAULT_CATALOG.filter(defProd => !deletedIds.includes(String(defProd.id)));
     saveCatalogToStorage();
   } else {
     let modified = false;
 
-    // Merge authentic Sports Station products that do not exist yet in stored catalog
+    // Merge authentic Sports Station products that do not exist yet in stored catalog (DAN BELUM DIHAPUS)
     DEFAULT_CATALOG.forEach(defProd => {
-      const exists = catalogProducts.some(p => p.id === defProd.id);
+      if (deletedIds.includes(String(defProd.id))) return; // JANGAN pulihkan produk yang sudah sengaja dihapus admin!
+      const exists = catalogProducts.some(p => String(p.id) === String(defProd.id));
       if (!exists) {
         catalogProducts.push({ ...defProd });
         modified = true;
@@ -1812,6 +2242,7 @@ function loadCatalogProducts() {
         modified = true;
       }
     });
+
     if (modified) {
       saveCatalogToStorage();
     }
@@ -1819,8 +2250,15 @@ function loadCatalogProducts() {
 }
 
 function saveCatalogToStorage() {
-  localStorage.setItem('SportsStationCatalog', JSON.stringify(catalogProducts));
-  window.dispatchEvent(new Event('storage'));
+  try {
+    localStorage.setItem('SportsStationCatalog', JSON.stringify(catalogProducts));
+    window.dispatchEvent(new Event('storage'));
+  } catch (err) {
+    console.error('Error saving SportsStationCatalog to localStorage:', err);
+    if (window.SportsStationAuth) {
+      window.SportsStationAuth.showToast('⚠️ Penyimpanan browser lokal penuh, namun sinkronisasi cloud tetap diproses.');
+    }
+  }
 }
 
 function setupProductFilters() {
@@ -1857,15 +2295,11 @@ function setupProductFilters() {
     });
   }
 
-  // Live image preview in form
-  const imgInput = document.getElementById('prodImageInput');
-  const imgPreview = document.getElementById('prodImagePreview');
-  if (imgInput && imgPreview) {
-    imgInput.addEventListener('input', () => {
-      const url = imgInput.value.trim();
-      imgPreview.src = url || 'Asset/Logo/logo.png';
-    });
-  }
+  // Setup Image Dropzone & File Manager Support
+  setupImageDropzone();
+
+  // Live image preview for URL input (with debounce, paste support, validation)
+  setupImageUrlLivePreview();
 
   // Live price formatting & discount placement helper
   const priceInputEl = document.getElementById('prodPriceInput');
@@ -1895,11 +2329,18 @@ function setupProductFilters() {
   if (cancelBtn) cancelBtn.onclick = closeProductModal;
 }
 
+function syncFilterDropdownOptions() {
+  // Brand & Kategori di admin sinkron dan konsisten sesuai katalog toko shop
+}
+
 function renderProductsTable() {
   const tbody = document.getElementById('productsTableBody');
   if (!tbody) return;
 
+  syncFilterDropdownOptions();
+
   let filtered = [...catalogProducts];
+
 
   if (productSearchTerm) {
     filtered = filtered.filter(p => {
@@ -1911,7 +2352,13 @@ function renderProductsTable() {
   }
 
   if (productCategoryFilter) {
-    filtered = filtered.filter(p => (p.category || '').toLowerCase() === productCategoryFilter);
+    filtered = filtered.filter(p => {
+      const cat = (p.category || '').toLowerCase();
+      if (productCategoryFilter === 'sneakers' || productCategoryFilter === 'lifestyle') {
+        return cat === 'sneakers' || cat === 'lifestyle';
+      }
+      return cat === productCategoryFilter;
+    });
   }
 
   if (productBrandFilter) {
@@ -2028,8 +2475,8 @@ function renderProductsTable() {
  */
 function handleCategoryChangeForSizes(cat) {
   const currentKeys = Object.keys(currentModalSizeStock);
-  const isFootwearCat = ['running', 'lifestyle', 'basketball', 'football', 'training', 'badminton', 'tennis', 'sandals'].includes(cat);
-  const isApparelCat = ['tshirt', 'shorts', 'pants', 'sports-bra', 'jacket', 'tanktop', 'swimwear'].includes(cat);
+  const isFootwearCat = ['running', 'lifestyle', 'sneakers', 'walking', 'fitness', 'basketball', 'football', 'training', 'badminton', 'tennis', 'sandals'].includes(cat);
+  const isApparelCat = ['tshirt', 'shorts', 'pants', 'sports-bra', 'jacket', 'tanktop', 'swimwear', 'swimming'].includes(cat);
 
   const hasShoeKeys = currentKeys.some(k => /^[34][0-9]$/.test(k));
   const hasApparelKeys = currentKeys.some(k => ['S', 'M', 'L', 'XL', 'XXL'].includes(k));
@@ -2208,6 +2655,270 @@ function getTagBadgeClass(tag) {
   return '';
 }
 
+let currentProductImageData = '';
+let currentImageInputMode = 'url';
+
+function switchImageInputMode(mode) {
+  currentImageInputMode = mode;
+  const btnFile = document.getElementById('btnModeFile');
+  const btnUrl = document.getElementById('btnModeUrl');
+  const dropzone = document.getElementById('imageFileDropzone');
+  const urlBox = document.getElementById('imageUrlBox');
+
+  if (mode === 'file') {
+    if (btnFile) btnFile.classList.add('active');
+    if (btnUrl) btnUrl.classList.remove('active');
+    if (dropzone) dropzone.style.display = 'block';
+    if (urlBox) urlBox.style.display = 'none';
+  } else {
+    if (btnUrl) btnUrl.classList.add('active');
+    if (btnFile) btnFile.classList.remove('active');
+    if (dropzone) dropzone.style.display = 'none';
+    if (urlBox) urlBox.style.display = 'block';
+
+    const urlInput = document.getElementById('prodImageInput');
+    if (urlInput && currentProductImageData && !currentProductImageData.startsWith('data:image')) {
+      if (!urlInput.value) {
+        urlInput.value = currentProductImageData;
+      }
+    }
+    // Auto-focus the URL input
+    setTimeout(() => {
+      if (urlInput) urlInput.focus();
+    }, 100);
+  }
+}
+
+// Kompresi gambar lokal otomatis via HTML5 Canvas agar muat di localStorage & cepat di-sync ke Supabase
+function compressImageFile(file, maxWidth = 800, maxHeight = 800, quality = 0.82) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onerror = () => resolve('');
+    reader.onload = (e) => {
+      const rawDataUrl = e.target.result;
+      const img = new Image();
+      img.onerror = () => {
+        // Fallback: gunakan raw data URL jika format canvas browser tidak mendukung
+        resolve(rawDataUrl);
+      };
+      img.onload = () => {
+        try {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width / height > maxWidth / maxHeight) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let dataUrl = '';
+          try {
+            dataUrl = canvas.toDataURL('image/webp', quality);
+          } catch (err) {}
+          if (!dataUrl || !dataUrl.startsWith('data:image/webp')) {
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+          resolve(dataUrl || rawDataUrl);
+        } catch (err) {
+          resolve(rawDataUrl);
+        }
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Live preview handler for URL image input
+function setupImageUrlLivePreview() {
+  const urlInput = document.getElementById('prodImageInput');
+  if (!urlInput || urlInput._livePreviewAttached) return;
+  urlInput._livePreviewAttached = true;
+
+  let debounceTimer = null;
+
+  function updateImagePreviewFromUrl(rawUrl) {
+    const url = (rawUrl || '').trim().replace(/^["']|["']$/g, '');
+    if (!url) return;
+
+    currentImageInputMode = 'url';
+    const imgPreview = document.getElementById('prodImagePreview');
+    const nameEl = document.getElementById('imagePreviewName');
+    const badge = document.getElementById('imageSourceLabel');
+
+    if (badge) {
+      badge.textContent = 'Memeriksa URL...';
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#92400e';
+    }
+
+    if (imgPreview) {
+      imgPreview.referrerPolicy = 'no-referrer';
+      imgPreview.src = url;
+
+      imgPreview.onerror = function () {
+        this.src = 'Asset/Logo/logo.png';
+        if (nameEl) nameEl.textContent = '⚠️ Gagal memuat gambar (Pastikan link gambar langsung)';
+        if (badge) {
+          badge.textContent = 'URL Tidak Valid / Diblokir';
+          badge.style.background = '#fee2e2';
+          badge.style.color = '#dc2626';
+        }
+      };
+
+      imgPreview.onload = function () {
+        if (this.src.includes('logo.png') && url !== 'Asset/Logo/logo.png') return;
+        if (badge) {
+          badge.textContent = '✅ Gambar Berhasil Dimuat';
+          badge.style.background = '#dcfce7';
+          badge.style.color = '#15803d';
+        }
+      };
+    }
+
+    currentProductImageData = url;
+
+    if (nameEl) {
+      try {
+        const filename = url.includes('/') ? url.substring(url.lastIndexOf('/') + 1).split('?')[0] : url;
+        nameEl.textContent = decodeURIComponent(filename).substring(0, 60) || url.substring(0, 60);
+      } catch (e) {
+        nameEl.textContent = url.substring(0, 60);
+      }
+    }
+  }
+
+  ['input', 'paste', 'change'].forEach(eventName => {
+    urlInput.addEventListener(eventName, function () {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const val = urlInput.value.trim();
+        if (val) {
+          updateImagePreviewFromUrl(val);
+        }
+      }, eventName === 'paste' ? 50 : 300);
+    });
+  });
+}
+
+async function handleProductFileSelected(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const isImageFile = (file.type && file.type.startsWith('image/')) || /\.(jpe?g|png|webp|avif|gif|svg|jfif|bmp)$/i.test(file.name);
+  if (!isImageFile) {
+    alert('File yang dipilih harus berupa file gambar (PNG, JPG, JPEG, WEBP, AVIF).');
+    return;
+  }
+
+  const nameEl = document.getElementById('imagePreviewName');
+  const badge = document.getElementById('imageSourceLabel');
+  const imgPreview = document.getElementById('prodImagePreview');
+  const imgInput = document.getElementById('prodImageInput');
+
+  if (nameEl) nameEl.textContent = `⏳ Memproses ${file.name}...`;
+  if (badge) {
+    badge.textContent = 'Memproses...';
+    badge.style.background = '#fef3c7';
+    badge.style.color = '#92400e';
+  }
+
+  try {
+    const dataUrl = await compressImageFile(file, 800, 800, 0.82);
+    if (!dataUrl) throw new Error('Data gambar kosong');
+
+    currentProductImageData = dataUrl;
+    currentImageInputMode = 'file';
+
+    if (imgPreview) {
+      imgPreview.referrerPolicy = 'no-referrer';
+      imgPreview.src = dataUrl;
+    }
+
+    if (imgInput) imgInput.value = '';
+
+    const approxKb = Math.round(dataUrl.length * 0.75 / 1024);
+    if (nameEl) nameEl.textContent = `${file.name} (Tersimpan ${approxKb} KB)`;
+
+    if (badge) {
+      badge.textContent = '✅ File Komputer (Siap Disimpan)';
+      badge.style.background = '#dcfce7';
+      badge.style.color = '#15803d';
+    }
+  } catch (err) {
+    console.error('Gagal memproses gambar:', err);
+    alert('Gagal memproses gambar: ' + (err.message || 'Format tidak didukung'));
+    if (nameEl) nameEl.textContent = '⚠️ Gagal memproses gambar';
+  }
+}
+
+function resetProductImage() {
+  currentProductImageData = '';
+  const fileInput = document.getElementById('prodImageFileInput');
+  if (fileInput) fileInput.value = '';
+
+  const imgInput = document.getElementById('prodImageInput');
+  if (imgInput) imgInput.value = '';
+
+  const imgPreview = document.getElementById('prodImagePreview');
+  if (imgPreview) {
+    imgPreview.referrerPolicy = 'no-referrer';
+    imgPreview.src = 'Asset/Logo/logo.png';
+  }
+
+  const nameEl = document.getElementById('imagePreviewName');
+  if (nameEl) nameEl.textContent = 'Belum ada foto (Default Logo)';
+
+  const badge = document.getElementById('imageSourceLabel');
+  if (badge) {
+    badge.textContent = 'Kosong';
+    badge.style.background = '#f1f5f9';
+    badge.style.color = '#64748b';
+  }
+}
+
+function setupImageDropzone() {
+  const dropzone = document.getElementById('imageFileDropzone');
+  if (!dropzone) return;
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('dragover');
+    });
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files && files.length > 0) {
+      const fileInput = document.getElementById('prodImageFileInput');
+      if (fileInput) fileInput.files = files;
+      handleProductFileSelected({ target: { files } });
+    }
+  });
+}
+
 function openProductModal(productId = null) {
   const modal = document.getElementById('adminProductModal');
   const modalTitle = document.getElementById('productModalTitle');
@@ -2220,12 +2931,14 @@ function openProductModal(productId = null) {
   const discInput = document.getElementById('prodDiscountPercentInput');
   const imgInput = document.getElementById('prodImageInput');
   const imgPreview = document.getElementById('prodImagePreview');
+  const nameEl = document.getElementById('imagePreviewName');
+  const badge = document.getElementById('imageSourceLabel');
 
   if (!modal) return;
 
   if (productId) {
     // Edit Mode
-    const prod = catalogProducts.find(p => p.id === productId);
+    const prod = catalogProducts.find(p => String(p.id) === String(productId));
     if (!prod) return;
 
     modalTitle.textContent = 'Edit Produk & Kategori';
@@ -2243,8 +2956,32 @@ function openProductModal(productId = null) {
       discInput.value = prod.discount || 0;
     }
 
-    imgInput.value = prod.image || '';
-    imgPreview.src = prod.image || 'Asset/Logo/logo.png';
+    const imgVal = prod.image || 'Asset/Logo/logo.png';
+    currentProductImageData = imgVal;
+    if (imgPreview) {
+      imgPreview.referrerPolicy = 'no-referrer';
+      imgPreview.src = imgVal;
+    }
+
+    if (imgVal.startsWith('data:image')) {
+      switchImageInputMode('file');
+      if (imgInput) imgInput.value = '';
+      if (nameEl) nameEl.textContent = 'Foto Komputer Tersimpan';
+      if (badge) {
+        badge.textContent = 'File Komputer (Lokal)';
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+      }
+    } else {
+      switchImageInputMode('url');
+      if (imgInput) imgInput.value = imgVal;
+      if (nameEl) nameEl.textContent = imgVal.substring(imgVal.lastIndexOf('/') + 1) || imgVal;
+      if (badge) {
+        badge.textContent = imgVal.startsWith('http') ? 'Tautan Web (URL)' : 'Path Lokal (Asset)';
+        badge.style.background = '#e0f2fe';
+        badge.style.color = '#0369a1';
+      }
+    }
 
     const tagInput = document.getElementById('prodTagInput');
     if (tagInput) tagInput.value = prod.tag !== undefined ? prod.tag : '';
@@ -2265,14 +3002,29 @@ function openProductModal(productId = null) {
       discInput.value = 0;
     }
 
-    imgInput.value = 'Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif';
-    imgPreview.src = 'Asset/Sepatu/Nike/Men/Running/NIKE+PEGASUS+PLUS+2.avif';
+    switchImageInputMode('url');
+    resetProductImage();
 
     const tagInput = document.getElementById('prodTagInput');
     if (tagInput) tagInput.value = 'NEW';
 
     // Default sizes for running shoes
     currentModalSizeStock = { '38': 4, '39': 8, '40': 10, '41': 12, '42': 10, '43': 7, '44': 4, '45': 2 };
+  }
+
+  // Tombol Hapus di dalam modal
+  const deleteBtn = document.getElementById('productModalDeleteBtn');
+  if (deleteBtn) {
+    if (productId) {
+      deleteBtn.style.display = 'inline-flex';
+      deleteBtn.onclick = () => {
+        closeProductModal();
+        deleteProduct(productId);
+      };
+    } else {
+      deleteBtn.style.display = 'none';
+      deleteBtn.onclick = null;
+    }
   }
 
   renderModalSizeStockGrid();
@@ -2297,7 +3049,18 @@ function handleProductFormSubmit(e) {
   const gender = document.getElementById('prodGenderInput').value;
   const basePrice = Number(document.getElementById('prodPriceInput').value);
   const discount = Math.max(0, Math.min(99, parseInt(document.getElementById('prodDiscountPercentInput')?.value, 10) || 0));
-  const image = document.getElementById('prodImageInput').value.trim() || 'Asset/Logo/logo.png';
+
+  let image = '';
+  const rawUrl = (document.getElementById('prodImageInput')?.value || '').trim().replace(/^["']|["']$/g, '');
+  if (currentImageInputMode === 'file' && currentProductImageData && currentProductImageData.startsWith('data:image')) {
+    image = currentProductImageData;
+  } else if (rawUrl) {
+    image = rawUrl;
+  } else if (currentProductImageData) {
+    image = currentProductImageData;
+  } else {
+    image = 'Asset/Logo/logo.png';
+  }
 
   if (!name || !basePrice) {
     alert('Nama produk dan harga normal wajib diisi.');
@@ -2316,7 +3079,10 @@ function handleProductFormSubmit(e) {
     isSale = true;
   }
 
-  if (id) {
+  const isEditing = Boolean(id);
+  let savedProd = null;
+
+  if (isEditing) {
     // Update existing product
     const prod = catalogProducts.find(p => p.id === id);
     if (prod) {
@@ -2335,17 +3101,18 @@ function handleProductFormSubmit(e) {
       prod.sizeStock = { ...currentModalSizeStock };
       prod.stock = totalStock;
       prod.image = image;
+      savedProd = prod;
     }
     let placementNotice = '';
     if (discount >= 50) {
       placementNotice = ' 🏷️ Otomatis masuk rak Sale 50% Beranda!';
-    } else if (prod.tag && prod.tag.toUpperCase() === 'NEW') {
+    } else if (savedProd && savedProd.tag && savedProd.tag.toUpperCase() === 'NEW') {
       placementNotice = ' ✨ Tampil di rak Newest Collection selama 7 hari.';
-    } else if (prod.tag === '') {
+    } else if (savedProd && savedProd.tag === '') {
       placementNotice = ' ℹ️ Tag dihapus (dikeluarkan dari rak Newest Collection).';
     }
     if (window.SportsStationAuth) {
-      window.SportsStationAuth.showToast(`Produk "${name}" berhasil diperbarui dengan ${totalStock} unit stok.${placementNotice}`);
+      window.SportsStationAuth.showToast(`Produk "${name}" berhasil diperbarui dengan foto baru!${placementNotice}`);
     }
   } else {
     // Create new product
@@ -2371,6 +3138,8 @@ function handleProductFormSubmit(e) {
     };
 
     catalogProducts.unshift(newProd);
+    savedProd = newProd;
+
     let placementNotice = '';
     if (discount >= 50) {
       placementNotice = ' 🏷️ Otomatis masuk rak Sale 50% Beranda!';
@@ -2382,28 +3151,69 @@ function handleProductFormSubmit(e) {
     }
   }
 
-  saveCatalogToStorage();
-  const savedProd = isEditing ? catalogProducts.find(p => p.id === currentEditingProductId) : catalogProducts[0];
-  if (window.SportsStationDB && savedProd) {
-    window.SportsStationDB.upsertProduct(savedProd);
+  // Jika produk baru atau edit disimpan, pastikan ID-nya dibersihkan dari blacklist deleted
+  if (savedProd && savedProd.id) {
+    const deletedIds = getDeletedProductIds();
+    if (deletedIds.includes(String(savedProd.id))) {
+      const updated = deletedIds.filter(id => id !== String(savedProd.id));
+      localStorage.setItem('SportsStationDeletedProducts', JSON.stringify(updated));
+    }
   }
+
+  saveCatalogToStorage();
+
+  if (window.SportsStationDB && savedProd) {
+    window.SportsStationDB.upsertProduct(savedProd).then(() => {
+      console.log('✅ Berhasil sync produk ke Supabase:', savedProd.id);
+    }).catch(err => {
+      console.warn('⚠️ Gagal sync produk ke Supabase:', err);
+    });
+  }
+
   renderProductsTable();
   closeProductModal();
 }
 
-function deleteProduct(productId) {
-  const prod = catalogProducts.find(p => p.id === productId);
-  if (!prod) return;
+async function deleteProduct(productId) {
+  const strId = String(productId);
+  const prod = catalogProducts.find(p => String(p.id) === strId);
+  if (!prod) {
+    console.warn('Produk tidak ditemukan dalam katalog:', productId);
+    return;
+  }
 
-  if (confirm(`Apakah Anda yakin ingin menghapus produk "${prod.name}" dari katalog toko?`)) {
-    catalogProducts = catalogProducts.filter(p => p.id !== productId);
-    saveCatalogToStorage();
-    if (window.SportsStationDB) {
-      window.SportsStationDB.deleteProduct(productId);
-    }
-    renderProductsTable();
-    if (window.SportsStationAuth) {
-      window.SportsStationAuth.showToast(`Produk "${prod.name}" berhasil dihapus.`);
+  const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus produk "${prod.name}" dari katalog toko?`);
+  if (!confirmDelete) return;
+
+  // 1. Simpan ke blacklist deleted IDs agar tidak pernah dipulihkan lagi oleh DEFAULT_CATALOG / DEFAULT_PRODUCTS / Supabase sync
+  const deletedIds = getDeletedProductIds();
+  if (!deletedIds.includes(strId)) {
+    deletedIds.push(strId);
+    localStorage.setItem('SportsStationDeletedProducts', JSON.stringify(deletedIds));
+  }
+
+  // 2. Hapus dari catalogProducts di memori
+  catalogProducts = catalogProducts.filter(p => String(p.id) !== strId);
+
+  // 3. Simpan catalog baru ke localStorage
+  saveCatalogToStorage();
+
+  // 4. Render ulang tabel & overview segera
+  renderProductsTable();
+  renderSalesOverview();
+
+  // 5. Toast notifikasi berhasil
+  if (window.SportsStationAuth) {
+    window.SportsStationAuth.showToast(`Produk "${prod.name}" berhasil dihapus.`);
+  }
+
+  // 6. Hapus dari Supabase jika online
+  if (window.SportsStationDB) {
+    try {
+      await window.SportsStationDB.deleteProduct(strId);
+      console.log('✅ Berhasil sinkronisasi hapus produk ke Supabase:', strId);
+    } catch (err) {
+      console.warn('⚠️ Gagal sync hapus produk ke Supabase:', err);
     }
   }
 }
@@ -2510,3 +3320,6 @@ window.stepQuickSizeQty = stepQuickSizeQty;
 window.updateQuickSizeQty = updateQuickSizeQty;
 window.setDiscountPercent = setDiscountPercent;
 window.updatePriceAndDiscountCalculation = updatePriceAndDiscountCalculation;
+window.switchImageInputMode = switchImageInputMode;
+window.handleProductFileSelected = handleProductFileSelected;
+window.resetProductImage = resetProductImage;

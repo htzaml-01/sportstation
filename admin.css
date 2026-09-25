@@ -561,10 +561,44 @@ body.admin-body {
   border-radius: 12px;
 }
 
+.status-terkonfirmasi { background-color: #eff6ff; color: #1d4ed8; }
 .status-diproses { background-color: #eff6ff; color: #2563eb; }
 .status-menunggu-pembayaran { background-color: #fff7ed; color: #ea580c; }
 .status-dikirim { background-color: #f0fdf4; color: #16a34a; }
 .status-selesai { background-color: #f8fafc; color: #475569; }
+.status-dibatalkan { background-color: #fef2f2; color: #dc2626; }
+
+.admin-btn-handover {
+  padding: 6px 11px;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-btn-handover:hover {
+  background-color: #f95a00;
+  border-color: #f95a00;
+  box-shadow: 0 2px 6px rgba(249, 90, 0, 0.3);
+}
+
+.admin-btn-handover i {
+  color: #f95a00;
+  transition: color 0.2s ease;
+}
+
+.admin-btn-handover:hover i {
+  color: #ffffff;
+}
+
 
 .admin-action-select {
   padding: 6px 10px;
@@ -831,6 +865,57 @@ body.admin-body {
   background-color: #f8fafc;
 }
 
+/* Image Selector & File Manager Tabs */
+.image-mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.image-mode-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.image-mode-btn:hover {
+  background: #e2e8f0;
+}
+
+.image-mode-btn.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.image-dropzone {
+  border: 2px dashed #93c5fd;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 20px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-dropzone:hover,
+.image-dropzone.dragover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .admin-stats-grid {
@@ -1091,3 +1176,180 @@ body.admin-body {
   text-decoration: underline;
   color: #1d4ed8;
 }
+
+/* =========================================================
+   OFFICIAL INVOICE STYLING & PRINT OPTIMIZATION
+   ========================================================= */
+.invoice-card-paper {
+  background: #ffffff;
+  color: #0f172a;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.5;
+}
+
+.invoice-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2.5px solid #f95a00;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+
+.invoice-brand-logo {
+  height: 32px;
+  margin-bottom: 6px;
+}
+
+.invoice-company-info {
+  font-size: 11.5px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.invoice-main-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  font-family: 'Montserrat', sans-serif;
+  text-align: right;
+  margin: 0 0 4px;
+}
+
+.invoice-status-stamp {
+  display: inline-block;
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1.5px solid #86efac;
+  padding: 3px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.invoice-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  font-size: 12.5px;
+}
+
+.invoice-details-col h4 {
+  margin: 0 0 6px 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.invoice-table th {
+  background-color: #f1f5f9;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  text-align: left;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.invoice-table td {
+  padding: 12px;
+  font-size: 12.5px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.invoice-calc-box {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
+.invoice-calc-table {
+  width: 320px;
+}
+
+.invoice-calc-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 12.5px;
+  color: #475569;
+}
+
+.invoice-calc-row.total-row {
+  border-top: 2px solid #0f172a;
+  margin-top: 6px;
+  padding-top: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.invoice-footer-note {
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 16px;
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+/* PRINT MEDIA QUERY */
+@media print {
+  body.admin-body {
+    background: #ffffff !important;
+  }
+
+  .admin-sidebar,
+  .admin-topbar,
+  .admin-view-content,
+  .admin-modal-backdrop:not(#adminInvoiceModal),
+  .admin-modal-header button,
+  .admin-modal-header h3 {
+    display: none !important;
+  }
+
+  #adminInvoiceModal {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  #adminInvoiceModal .admin-modal-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  #adminInvoiceModal .admin-modal-header {
+    display: none !important;
+  }
+
+  .invoice-printable-area {
+    padding: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
