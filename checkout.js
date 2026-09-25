@@ -46,8 +46,12 @@ function initCustomerData() {
     if (user) {
       const nameInput = document.getElementById('customerName');
       const emailInput = document.getElementById('customerEmail');
+      const phoneInput = document.getElementById('customerPhone');
+      const addressInput = document.getElementById('detailedAddress');
       if (nameInput && !nameInput.value) nameInput.value = user.name || '';
       if (emailInput && !emailInput.value) emailInput.value = user.email || '';
+      if (phoneInput && !phoneInput.value) phoneInput.value = user.phone || '';
+      if (addressInput && user.address && !addressInput.value) addressInput.value = user.address || '';
     }
   }
 }

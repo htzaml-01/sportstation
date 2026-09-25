@@ -13,38 +13,12 @@
   function getCurrentUser() {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
-      let user = data ? JSON.parse(data) : null;
-      const isAdminPage = window.location.pathname.includes('admin.html');
-
-      // If no session exists or if session was contaminated with Administrator on customer pages
-      if (!user) {
-        if (!isAdminPage) {
-          user = {
-            name: 'Azzam Anindita Daniswara',
-            email: 'aznidaniswata@gmail.com',
-            phone: '081234567890',
-            role: 'customer',
-            memberId: 'SS-AZZAM-01',
-            points: 250,
-            address: 'BSD City, Tangerang Selatan',
-            isLoggedIn: true
-          };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-        }
-      } else if (!isAdminPage && (user.name === 'Administrator' || user.email === 'admin@sportsstation.id' || user.role === 'admin')) {
-        user = {
-          name: 'Azzam Anindita Daniswara',
-          email: 'aznidaniswata@gmail.com',
-          phone: '081234567890',
-          role: 'customer',
-          memberId: 'SS-AZZAM-01',
-          points: 250,
-          address: 'BSD City, Tangerang Selatan',
-          isLoggedIn: true
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      if (!data) return null;
+      const user = JSON.parse(data);
+      if (user && (user.isLoggedIn || user.email)) {
+        return user;
       }
-      return user;
+      return null;
     } catch (e) {
       console.error('Error reading auth storage:', e);
       return null;
@@ -68,10 +42,32 @@
    * Log out user
    */
   function logoutUser() {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem('sportsstation_admin_logged');
+
+      // If Supabase client exists, signOut
+      if (window.SportsStationDB && typeof window.SportsStationDB.getClient === 'function') {
+        const sb = window.SportsStationDB.getClient();
+        if (sb && sb.auth && typeof sb.auth.signOut === 'function') {
+          sb.auth.signOut().catch(() => {});
+        }
+      }
+    } catch (e) {
+      console.error('Error during logout:', e);
+    }
+
     window.dispatchEvent(new CustomEvent('sportsstation_auth_changed', { detail: { user: null } }));
     updateAllAuthUI();
     showAuthToast('Berhasil keluar dari akun.');
+
+    // Redirect to login or home if on a protected page
+    const pathname = window.location.pathname.toLowerCase().split('/').pop() || 'index.html';
+    if (pathname.includes('profile.html') || pathname.includes('orders.html') || pathname.includes('checkout.html') || pathname.includes('admin.html')) {
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 400);
+    }
   }
 
   const REGISTERED_USERS_KEY = 'sportsstation_registered_users';
