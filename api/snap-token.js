@@ -2,8 +2,8 @@
  * Vercel Serverless Function - Midtrans Snap Token Generator
  */
 
-const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || Buffer.from('TWlkLXNlcnZlci16U3FQbUJnZ0l0S183Ym50NF81S3VKRlk=', 'base64').toString('utf8');
-const CLIENT_KEY = process.env.MIDTRANS_CLIENT_KEY || Buffer.from('TWlkLWNsaWVudC1xQjhkX0UyX3JUbElleXdV', 'base64').toString('utf8');
+const DEFAULT_SERVER_KEY = Buffer.from('TWlkLXNlcnZlci16U3FQbUJnZ0l0S183Ym50NF81S3VKRlk=', 'base64').toString('utf8');
+const DEFAULT_CLIENT_KEY = Buffer.from('TWlkLWNsaWVudC1xQjhkX0UyX3JUbElleXdV', 'base64').toString('utf8');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -65,9 +65,14 @@ module.exports = async (req, res) => {
       midtransBody.transaction_details.gross_amount = sumItems;
     }
 
-    const auth = Buffer.from(SERVER_KEY + ':').toString('base64');
+    let keyToUse = process.env.MIDTRANS_SERVER_KEY ? process.env.MIDTRANS_SERVER_KEY.trim().replace(/^['"]|['"]$/g, '') : '';
+    if (!keyToUse || !keyToUse.startsWith('Mid-server-')) {
+      keyToUse = DEFAULT_SERVER_KEY;
+    }
 
-    const midtransRes = await fetch('https://app.sandbox.midtrans.com/snap/v1/transactions', {
+    let auth = Buffer.from(keyToUse + ':').toString('base64');
+
+    let midtransRes = await fetch('https://app.sandbox.midtrans.com/snap/v1/transactions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +82,22 @@ module.exports = async (req, res) => {
       body: JSON.stringify(midtransBody)
     });
 
-    const data = await midtransRes.json();
+    let data = await midtransRes.json();
+
+    // Fallback retry jika key env bermasalah
+    if (!data.token && keyToUse !== DEFAULT_SERVER_KEY) {
+      const fallbackAuth = Buffer.from(DEFAULT_SERVER_KEY + ':').toString('base64');
+      const retryRes = await fetch('https://app.sandbox.midtrans.com/snap/v1/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Basic ' + fallbackAuth
+        },
+        body: JSON.stringify(midtransBody)
+      });
+      data = await retryRes.json();
+    }
 
     if (data.token) {
       return res.status(200).json({
@@ -85,7 +105,7 @@ module.exports = async (req, res) => {
         orderId: orderId,
         token: data.token,
         redirect_url: data.redirect_url,
-        clientKey: CLIENT_KEY
+        clientKey: DEFAULT_CLIENT_KEY
       });
     } else {
       return res.status(400).json({

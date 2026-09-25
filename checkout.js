@@ -640,25 +640,34 @@ function initPlaceOrder() {
       submitBtn.innerHTML = '<i class="fa-solid fa-lock"></i> PLACE ORDER NOW';
 
       // 2. Buka Popup Resmi Midtrans Snap
-      window.snap.pay(token, {
-        onSuccess: function (result) {
-          handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
-        },
-        onPending: function (result) {
-          handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
-        },
-        onError: function (result) {
-          console.warn('Midtrans Sandbox notice:', result);
-          handlePaymentComplete(result || {}, orderId, grandTotal, 'Berhasil');
-        },
-        onClose: function () {
-          // Jika ditutup, tetap lunas terkonfirmasi
-          handlePaymentComplete({
-            order_id: orderId,
-            payment_type: 'Midtrans Settlement'
-          }, orderId, grandTotal, 'Berhasil');
+      try {
+        window.snap.pay(token, {
+          onSuccess: function (result) {
+            handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
+          },
+          onPending: function (result) {
+            handlePaymentComplete(result, orderId, grandTotal, 'Berhasil');
+          },
+          onError: function (result) {
+            console.warn('Midtrans Sandbox notice:', result);
+            handlePaymentComplete(result || {}, orderId, grandTotal, 'Berhasil');
+          },
+          onClose: function () {
+            // Jika ditutup, tetap lunas terkonfirmasi
+            handlePaymentComplete({
+              order_id: orderId,
+              payment_type: 'Midtrans Settlement'
+            }, orderId, grandTotal, 'Berhasil');
+          }
+        });
+      } catch (snapErr) {
+        console.warn('Snap popup error, redirecting to Midtrans:', snapErr);
+        if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          showFallbackModal(orderId, grandTotal);
         }
-      });
+      }
     } else if (redirectUrl) {
       window.location.href = redirectUrl;
     } else {
