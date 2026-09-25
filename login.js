@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Check URL parameter (?mode=signup)
-  const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('mode') === 'signup' || urlParams.get('action') === 'signup') {
     setAuthMode('signup');
   }
